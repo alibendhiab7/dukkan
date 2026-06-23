@@ -1,0 +1,8 @@
+{
+  "appId": "com.grocerysaas.app",
+  "appName": "نظام إدارة البقالات",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

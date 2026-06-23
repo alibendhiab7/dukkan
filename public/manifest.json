@@ -1,0 +1,16 @@
+{
+  "short_name": "نظام البقالة",
+  "name": "نظام إدارة البقالات السحابي",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#111111",
+  "background_color": "#F6F6F6"
+}
