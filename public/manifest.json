@@ -1,6 +1,7 @@
 {
-  "short_name": "نظام البقالة",
-  "name": "نظام إدارة البقالات السحابي",
+  "short_name": "دكّان",
+  "name": "دكّان | Dukkan — نظام إدارة البقالات",
+  "description": "نظام سحابي متكامل لإدارة نقاط البيع والمخازن",
   "icons": [
     {
       "src": "favicon.svg",
@@ -11,6 +12,9 @@
   "start_url": ".",
   "display": "standalone",
   "orientation": "any",
-  "theme_color": "#111111",
-  "background_color": "#F6F6F6"
+  "theme_color": "#1e1b4b",
+  "background_color": "#0b0f19",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["business", "productivity"]
 }

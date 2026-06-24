@@ -1,8 +1,9 @@
 // src/i18n/index.ts
+import { stringsEn } from './en';
 
-export const strings = {
+const stringsAr = {
   common: {
-    appName: 'نظام إدارة البقالات',
+    appName: 'دكّان',
     sar: 'ر.س',
     yer: 'ر.ي',
     loading: 'جاري التحميل...',
@@ -19,11 +20,25 @@ export const strings = {
     actions: 'الإجراءات',
     error: 'خطأ',
     success: 'نجاح',
+    warning: 'تحذير',
+    info: 'معلومات',
     currency: 'العملة',
     date: 'التاريخ',
     performedBy: 'بواسطة',
     confirmDelete: 'هل أنت متأكد من الحذف؟',
-    lowStock: 'مخزون منخفض'
+    lowStock: 'مخزون منخفض',
+    export: 'تصدير',
+    import: 'استيراد',
+    filter: 'تصفية',
+    from: 'من',
+    to: 'إلى',
+    total: 'الإجمالي',
+    subtotal: 'المجموع الفرعي',
+    discount: 'الخصم',
+    noData: 'لا توجد بيانات',
+    confirm: 'تأكيد',
+    notes: 'ملاحظات',
+    all: 'الكل',
   },
   auth: {
     title: 'تسجيل الدخول للنظام',
@@ -42,97 +57,159 @@ export const strings = {
     quickActions: 'إجراءات سريعة',
     systemOverview: 'نظرة عامة على النظام',
     salesCount: 'عدد المبيعات اليوم',
-    totalRevenue: 'إجمالي المبيعات (SAR)',
-    totalProfit: 'إجمالي الأرباح (SAR)',
-    inventoryValuation: 'قيمة المخزون (SAR)',
+    totalRevenue: 'إجمالي المبيعات (ر.ي)',
+    totalProfit: 'إجمالي الأرباح (ر.ي)',
+    inventoryValuation: 'قيمة المخزون (ر.ي)',
     lowStockAlerts: 'تنبيهات المخزون المنخفض',
     latestMovements: 'آخر حركات المخزون',
-    exchangeRateDisplay: 'سعر الصرف الحالي (ريال سعودي ↔ ريال يمني)',
+    exchangeRateDisplay: 'سعر الصرف الحالي (ر.ي)',
     noSalesToday: 'لا توجد مبيعات مسجلة اليوم بعد.'
   },
   inventory: {
     title: 'إدارة المخازن والمنتجات',
     productName: 'اسم المنتج',
     barcode: 'الباركود',
-    purchasePrice: 'سعر الشراء (SAR)',
-    salePrice: 'سعر البيع (SAR)',
+    purchasePrice: 'سعر الشراء (ر.س)',
+    salePrice: 'سعر البيع (ر.س)',
     qty: 'الكمية المتوفرة',
     addProduct: 'إضافة منتج جديد',
     editProduct: 'تعديل المنتج',
     adjustStock: 'تسوية كمية المخزون',
-    stockIn: 'توريد (إدخال مخزون)',
-    stockOut: 'سحب (إخراج مخزون)',
+    stockIn: 'توريد (+)',
+    stockOut: 'سحب (-)',
     qtyToAdjust: 'الكمية المراد تسويتها',
     adjustmentType: 'نوع التسوية',
-    barcodeScanner: 'قارئ الباركود',
-    stockLevel: 'مستوى المخزون',
-    lowStockThreshold: 'تنبيه: الكمية المتبقية أقل من 5 قطع!',
-    noProducts: 'لا توجد منتجات مسجلة حالياً.'
+    noProducts: 'لا توجد منتجات مسجلة.',
+    category: 'التصنيف',
+    expiryDate: 'الصلاحية',
   },
   sales: {
-    title: 'نقطة البيع (POS)',
+    title: 'نقطة البيع',
     cart: 'سلة المشتريات',
-    checkout: 'إتمام البيع وطباعة الفاتورة',
-    emptyCart: 'السلة فارغة، أضف منتجات للبدء.',
-    payInYer: 'الدفع بالريال اليمني',
-    payInSar: 'الدفع بالريال السعودي',
-    amountDueYer: 'المبلغ المطلوب باليمني',
-    amountDueSar: 'المبلغ المطلوب بالسعودي',
-    rateUsed: 'سعر الصرف المستخدم',
-    completeSale: 'تأكيد عملية البيع',
-    printInvoice: 'معاينة الفاتورة الحرارية',
-    receiptTitle: 'بقالة حضرموت النموذجية',
-    receiptSubtitle: 'هاتف: 777123456 - المكلا',
-    invoiceNo: 'رقم الفاتورة',
-    item: 'المنتج',
-    qty: 'الكمية',
-    price: 'السعر',
-    subtotal: 'المجموع',
-    discount: 'الخصم',
-    total: 'الإجمالي النهائي',
-    salesHistory: 'سجل المبيعات والفواتير',
-    cashier: 'الكاشير'
+    emptyCart: 'السلة فارغة.',
+    completeSale: 'تأكيد البيع',
+    cashier: 'الكاشير',
+    customer: 'العميل',
+    holdCart: 'حفظ مؤقت',
+    voidSale: 'إلغاء',
+    saleNotes: 'ملاحظات',
   },
   employees: {
-    title: 'إدارة الموظفين والصلاحيات',
-    addEmployee: 'إضافة موظف جديد',
-    empUsername: 'اسم مستخدم الموظف',
-    empPassword: 'كلمة مرور الموظف',
-    empRole: 'الصلاحية / الدور',
-    roleAdmin: 'مدير متجر (كامل الصلاحيات)',
-    roleEmployee: 'موظف مبيعات (نقطة البيع ومخزون فقط)',
-    noEmployees: 'لا يوجد موظفون مضافون حالياً.'
+    title: 'إدارة الموظفين',
+    addEmployee: 'إضافة موظف',
+    empUsername: 'اسم المستخدم',
+    empPassword: 'كلمة المرور',
+    empRole: 'الدور',
+    roleAdmin: 'مدير متجر',
+    roleEmployee: 'موظف مبيعات',
+    noEmployees: 'لا يوجد موظفون.',
   },
   rates: {
-    title: 'إدارة أسعار الصرف',
-    sarToYerRate: 'سعر صرف الريال السعودي مقابل اليمني',
-    updateRate: 'تحديث سعر الصرف الحالي',
-    rateHelp: 'يتم استخدام سعر الصرف هذا في واجهة نقطة البيع (POS) لحساب المبلغ الإجمالي المطلوب من الزبون بالريال اليمني تلقائياً.',
+    title: 'أسعار الصرف',
+    sarToYerRate: 'سعر الصرف',
+    updateRate: 'تحديث',
     ratePlaceholder: 'مثال: 395',
-    lastUpdated: 'آخر تحديث'
+    rateHelp: 'يتم استخدام هذا السعر في نقطة البيع لحساب المبلغ بالريال اليمني تلقائياً.',
+    lastUpdated: 'آخر تحديث',
   },
   reports: {
-    title: 'التقارير والتحليلات',
-    salesAnalysis: 'تحليل المبيعات الأسبوعي',
-    inventorySummary: 'ملخص قيمة المخزون والأرباح',
-    profitVal: 'الأرباح المحققة (SAR)',
-    revenueVal: 'إجمالي قيمة المبيعات (SAR)',
-    valuationVal: 'القيمة الشرائية للمخزون (SAR)',
-    salesTrend: 'مؤشر المبيعات اليومية',
-    valuationHelp: 'تُحتسب القيمة الشرائية للمخزون بضرب كميات المنتجات المتوفرة في أسعار شرائها.'
+    title: 'التقارير',
+    dateRange: 'نطاق التاريخ',
+    topProducts: 'الأكثر مبيعاً',
+    productProfit: 'أرباح المنتجات',
+    lowStockReport: 'المخزون المنخفض',
+    financialCosts: 'التكاليف',
+    addCost: 'إضافة تكلفة',
+    comparePeriods: 'مقارنة الفترات',
+    totalCosts: 'إجمالي التكاليف',
+    costCategory: 'تصنيف التكلفة',
+    costDescription: 'وصف التكلفة',
+    costAmount: 'المبلغ',
+    costDate: 'التاريخ',
+  },
+  customers: {
+    title: 'العملاء',
+    addCustomer: 'إضافة عميل',
+    editCustomer: 'تعديل العميل',
+    customerName: 'اسم العميل',
+    phone: 'الهاتف',
+    email: 'البريد',
+    address: 'العنوان',
+    loyaltyPoints: 'نقاط الولاء',
+    search: 'بحث...',
+    noCustomers: 'لا يوجد عملاء.',
+  },
+  notifications: {
+    title: 'الإشعارات',
+    markAllRead: 'تعيين الكل كمقروء',
+    noNotifications: 'لا توجد إشعارات.',
+  },
+  coupons: {
+    title: 'الكوبونات',
+    addCoupon: 'إضافة كوبون',
+    editCoupon: 'تعديل الكوبون',
+    code: 'الكود',
+    discountType: 'نوع الخصم',
+    percentage: 'نسبة (%)',
+    fixed: 'مبلغ ثابت',
+    discountValue: 'قيمة الخصم',
+    maxUses: 'الحد الأقصى للاستخدام',
+    minCartTotal: 'الحد الأدنى للسلة',
+    expiresAt: 'تاريخ الانتهاء',
+    noCoupons: 'لا توجد كوبونات.',
+  },
+  returns: {
+    title: 'المرتجعات',
+    createReturn: 'إنشاء مرتجع',
+    reason: 'السبب',
+    totalRefund: 'المبلغ المسترد',
+    noReturns: 'لا توجد مرتجعات.',
+    damaged: 'تالف',
+    unsatisfied: 'غير راضٍ',
+    wrongItem: 'منتج خاطئ',
+    other: 'أخرى',
+  },
+  settings: {
+    title: 'الإعدادات',
+    darkMode: 'الوضع الداكن',
+    language: 'اللغة',
+    backup: 'نسخ احتياطي',
+    printSettings: 'إعدادات الطباعة',
   },
   sysadmin: {
-    title: 'لوحة التحكم العامة (SysAdmin)',
-    tenantsManagement: 'إدارة المتاجر (Tenants)',
-    addTenant: 'إضافة متجر (عميل) جديد',
-    storeName: 'اسم البقالة / المتجر',
-    clientCode: 'رمز الدخول الفريد (Client Code)',
-    modulesManagement: 'إدارة المودولات والميزات الفعالة',
-    toggleModules: 'تفعيل/إلغاء الميزات لهذا المتجر',
-    auditLogs: 'سجلات تدقيق النظام العامة',
-    globalStats: 'إحصائيات النظام العامة',
-    noTenants: 'لا توجد متاجر مسجلة في النظام حالياً.'
+    title: 'دكّان — لوحة تحكم المشرف',
+    tenantsManagement: 'إدارة المتاجر',
+    addTenant: 'إضافة متجر',
+    storeName: 'اسم المتجر',
+    clientCode: 'رمز العميل المميز',
+    auditLogs: 'سجلات التدقيق',
+    noTenants: 'لا توجد متاجر.',
   }
 };
-export type AppStrings = typeof strings;
+
+type Language = 'ar' | 'en';
+
+let currentLang: Language = (localStorage.getItem('grocery_saas_lang') as Language) || 'ar';
+
+export const setLanguage = (lang: Language) => {
+  currentLang = lang;
+  localStorage.setItem('grocery_saas_lang', lang);
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.documentElement.lang = lang;
+};
+
+export const getLanguage = (): Language => currentLang;
+
+export const strings = currentLang === 'en' ? stringsEn : stringsAr;
+
+export const t = (path: string): string => {
+  const keys = path.split('.');
+  let result: any = strings;
+  for (const key of keys) {
+    result = result?.[key];
+  }
+  return result || path;
+};
+
+export type AppStrings = typeof stringsAr;
 export default strings;

@@ -16,7 +16,7 @@ interface AuthState {
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
   clearError: () => void;
-  hasPermission: (requiredRole: 'sysadmin' | 'admin' | 'employee') => boolean;
+  hasPermission: (permissionOrRole: string) => boolean;
   isModuleEnabled: (module: 'inventory' | 'sales' | 'reports' | 'employees') => boolean;
   reloadSettings: () => Promise<void>;
 }
@@ -113,9 +113,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       }
 
+      // 3.5 Load user permissions
+      let finalUser = targetUser!;
+      if (finalUser.role !== 'sysadmin') {
+        const userPerms = await userRepo.getPermissions(finalUser.id);
+        finalUser = { ...finalUser, permissions: userPerms } as any;
+      }
+
       // 4. Save Session state
       const sessionData = {
-        user: targetUser,
+        user: finalUser,
         tenant: targetTenant,
         settings: targetSettings,
         isAuthenticated: true,
@@ -123,15 +130,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       };
 
       localStorage.setItem('grocery_saas_session', JSON.stringify({
-        userId: targetUser.id,
+        userId: finalUser.id,
         tenantId: targetTenant!.id
       }));
 
       // Log audit
       await auditRepo.create({
         tenant_id: targetTenant!.id,
-        action: `تم تسجيل الدخول بنجاح لدور: ${targetUser.role === 'sysadmin' ? 'مدير النظام' : targetUser.role === 'admin' ? 'مدير المتجر' : 'موظف'}`,
-        performed_by: targetUser.username
+        action: `تم تسجيل الدخول بنجاح لدور: ${finalUser.role === 'sysadmin' ? 'مدير النظام' : finalUser.role === 'admin' ? 'مدير المتجر' : 'موظف'}`,
+        performed_by: finalUser.username
       });
 
       set(sessionData);
@@ -191,6 +198,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       let settings: TenantSettings | null = null;
       if (user.role !== 'sysadmin') {
         settings = await settingsRepo.getByTenantId(tenantId);
+        const userPerms = await userRepo.getPermissions(user.id);
+        user = { ...user, permissions: userPerms } as any;
       }
 
       set({
@@ -207,17 +216,59 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  hasPermission: (requiredRole: 'sysadmin' | 'admin' | 'employee'): boolean => {
+  hasPermission: (permissionOrRole: string): boolean => {
     const { user } = get();
     if (!user) return false;
     
-    const roleHierarchy = {
-      sysadmin: 3,
-      admin: 2,
-      employee: 1
+    // SysAdmin and Store Admin bypass all checks
+    if (user.role === 'sysadmin' || user.role === 'admin') return true;
+
+    // Backward compatibility for standard role checking
+    if (permissionOrRole === 'sysadmin') return false;
+    if (permissionOrRole === 'admin') return false;
+    if (permissionOrRole === 'employee') return true;
+
+    // Granular permission check
+    const userPermissions = (user as any).permissions || {};
+    if (userPermissions[permissionOrRole] !== undefined) {
+      return Boolean(userPermissions[permissionOrRole]);
+    }
+
+    // Default permission rules for employees
+    const defaults: Record<string, boolean> = {
+      'dashboard.read': true,
+      'sales.read': true,
+      'sales.create': true,
+      'sales.delete': false,
+      'inventory.read': true,
+      'inventory.add': false,
+      'inventory.edit': false,
+      'inventory.delete': false,
+      'customers.read': true,
+      'customers.add': true,
+      'customers.edit': false,
+      'customers.delete': false,
+      'debts.read': true,
+      'debts.add': true,
+      'debts.edit': false,
+      'debts.delete': false,
+      'returns.read': true,
+      'returns.add': true,
+      'costs.read': false,
+      'costs.add': false,
+      'costs.edit': false,
+      'costs.delete': false,
+      'reports.read': false,
+      'rates.read': true,
+      'rates.edit': false,
+      'printSettings.read': false,
+      'backup.read': false,
+      'promotions.read': true,
+      'promotions.add': false,
+      'promotions.delete': false,
     };
 
-    return roleHierarchy[user.role] >= roleHierarchy[requiredRole];
+    return defaults[permissionOrRole] ?? false;
   },
 
   isModuleEnabled: (module: 'inventory' | 'sales' | 'reports' | 'employees'): boolean => {

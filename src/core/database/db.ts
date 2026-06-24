@@ -21,7 +21,12 @@ const ALL_TABLES = [
   'exchange_rates',
   'audit_logs',
   'notifications',
-  'financial_costs'
+  'financial_costs',
+  'customers',
+  'coupons',
+  'product_returns',
+  'return_items',
+  'user_permissions'
 ] as const;
 
 const DB_VERSION_KEY = 'grocery_saas_db_version';
@@ -44,11 +49,38 @@ class LocalStorageSqlEngine implements DatabaseDriver {
       localStorage.setItem(DB_VERSION_KEY, String(CURRENT_DB_VERSION));
     }
 
-    // Ensure all tables have storage slots
+    // Ensure all tables have storage slots and clean up duplicates
     for (const t of ALL_TABLES) {
       const key = this.prefix + t;
-      if (localStorage.getItem(key) === null) {
+      const raw = localStorage.getItem(key);
+      if (raw === null) {
         localStorage.setItem(key, '[]');
+      } else {
+        try {
+          const list = JSON.parse(raw);
+          if (Array.isArray(list)) {
+            const seen = new Set<string>();
+            const uniqueList: any[] = [];
+            for (const item of list) {
+              const pk = t === 'tenant_settings' ? item.tenant_id : item.id;
+              if (pk) {
+                const pkStr = String(pk);
+                if (!seen.has(pkStr)) {
+                  seen.add(pkStr);
+                  uniqueList.push(item);
+                }
+              } else {
+                uniqueList.push(item);
+              }
+            }
+            if (uniqueList.length !== list.length) {
+              console.log(`[DB] De-duplicated ${list.length - uniqueList.length} rows in table ${t}`);
+              localStorage.setItem(key, JSON.stringify(uniqueList));
+            }
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
       }
     }
 
@@ -157,6 +189,16 @@ class LocalStorageSqlEngine implements DatabaseDriver {
         row.id = crypto.randomUUID ? crypto.randomUUID() : 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
       }
       const data = this.read(table);
+      let exists = false;
+      if (table === 'tenant_settings') {
+        exists = data.some(r => r.tenant_id === row.tenant_id);
+      } else if (row.id !== undefined && row.id !== null) {
+        exists = data.some(r => r.id === row.id);
+      }
+      if (exists) {
+        console.warn(`[DB] Primary key violation on table ${table}. Row already exists.`);
+        return { rowsAffected: 0 };
+      }
       data.push(row);
       this.write(table, data);
       return { rowsAffected: 1 };

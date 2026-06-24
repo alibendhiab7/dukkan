@@ -19,6 +19,8 @@ import {
   Database,
   Sparkles
 } from 'lucide-react';
+import UnsoldProductsAlert from '../components/UnsoldProductsAlert';
+import { useOnlineStore } from '../../store/onlineStore';
 
 interface DashboardTabProps {
   setActiveTab: (tab: any) => void;
@@ -46,6 +48,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab }) => {
 
   // SQLite Cloud Sync state
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success'>('idle');
+
+  const { getOnlineByTenant } = useOnlineStore();
+  const onlineUsers = tenant ? getOnlineByTenant(tenant.id) : [];
 
   // Mini Exchange Rate Calculator states
   const [sarInput, setSarInput] = useState<string>('');
@@ -115,15 +120,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab }) => {
   const daysLeft = getExpiryDaysLeft();
   const showExpiryWarning = daysLeft <= 7 && daysLeft >= 0;
 
-  const dailyTarget = 5000;
-  const progressPercent = Math.min((stats.totalRevenueSar / dailyTarget) * 100, 100);
-  const getProgressMsg = (pct: number) => {
-    if (pct === 0) return 'ابدأ بتسجيل أول عملية بيع لليوم! 🚀';
-    if (pct < 30) return 'بداية موفقة، خطوة بخطوة للهدف اليومي! 📈';
-    if (pct < 70) return 'عمل رائع! تم تجاوز نصف الهدف اليومي بنجاح 👍';
-    if (pct < 100) return 'أنت قريب جداً من تحقيق الهدف! واصل التقدم 🎯';
-    return 'تهانينا! تم تحقيق وتجاوز الهدف المالي لليوم بنجاح باهر 🏆';
-  };
+
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -161,7 +158,11 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab }) => {
             هذه نظرة سريعة على أداء متجر <span style={{ fontWeight: 'bold', color: 'var(--text)' }}>({tenant?.store_name})</span> اليوم.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.35rem' }} className="hide-on-mobile">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.65rem', backgroundColor: 'hsl(142, 69%, 92%)', borderRadius: '99px', fontSize: '0.75rem' }}>
+            <span className="sync-dot" style={{ width: '6px', height: '6px' }} />
+            <span style={{ fontWeight: '700', color: 'var(--success)' }}>{onlineUsers.length} متصل</span>
+          </div>
           <span className="badge badge-info" style={{ fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
             <Sparkles size={12} style={{ color: 'var(--secondary-dark)' }} />
             <span>{user?.role === 'admin' ? 'مدير عام المتجر' : 'صلاحية موظف مبيعات'}</span>
@@ -198,9 +199,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab }) => {
             </div>
             <div>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{strings.dashboard.totalRevenue}</p>
-              <h3 style={{ fontSize: '1.5rem', color: 'var(--success)' }}>
-                {stats.totalRevenueSar.toFixed(2)} {strings.common.sar}
-              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ fontSize: '1.5rem', color: 'var(--success)', fontWeight: '800' }}>
+                  {Math.round(stats.totalRevenueSar * rateVal).toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>ر.ي</span>
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stats.totalRevenueSar.toFixed(2)} ر.س</span>
+              </div>
             </div>
           </div>
         )}
@@ -213,9 +217,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab }) => {
             </div>
             <div>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{strings.dashboard.totalProfit}</p>
-              <h3 style={{ fontSize: '1.5rem', color: 'var(--primary)' }}>
-                {stats.totalProfitSar.toFixed(2)} {strings.common.sar}
-              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ fontSize: '1.5rem', color: 'var(--primary)', fontWeight: '800' }}>
+                  {Math.round(stats.totalProfitSar * rateVal).toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>ر.ي</span>
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stats.totalProfitSar.toFixed(2)} ر.س</span>
+              </div>
             </div>
           </div>
         )}
@@ -228,38 +235,19 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab }) => {
             </div>
             <div>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{strings.dashboard.inventoryValuation}</p>
-              <h3 style={{ fontSize: '1.5rem', color: 'var(--text)' }}>
-                {stats.inventoryValuationSar.toFixed(2)} {strings.common.sar}
-              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ fontSize: '1.5rem', color: 'var(--text)', fontWeight: '800' }}>
+                  {Math.round(stats.inventoryValuationSar * rateVal).toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>ر.ي</span>
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stats.inventoryValuationSar.toFixed(2)} ر.س</span>
+              </div>
             </div>
           </div>
         )}
       </div>
 
       {/* Premium Multi-Widget Dashboard Grid */}
-      <div className="grid-3">
-        {/* Card 1: Target Tracker */}
-        <div className="target-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-dark)' }}>مؤشر مبيعات اليوم المستهدف</span>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>الهدف: {dailyTarget} ر.س</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <h3 style={{ fontSize: '1.4rem', color: 'var(--success)' }}>
-              {stats.totalRevenueSar.toFixed(2)} ر.س
-            </h3>
-            <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--primary-light)' }}>
-              {progressPercent.toFixed(0)}%
-            </span>
-          </div>
-          <div className="target-progress-bg">
-            <div className="target-progress-fill" style={{ width: `${progressPercent}%` }} />
-          </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, fontWeight: '700' }}>
-            {getProgressMsg(progressPercent)}
-          </p>
-        </div>
-
+      <div className="grid-2">
         {/* Card 2: Interactive SQLite Cloud Sync */}
         <div className="sync-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -397,50 +385,53 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab }) => {
             </div>
           </div>
 
-          {/* Low Stock Alerts */}
-          {isModuleEnabled('inventory') && (
-            <div className="card" style={{ flex: 1 }}>
-              <h3 style={{
-                fontSize: '1.1rem',
-                color: 'var(--danger)',
-                marginBottom: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                borderBottom: '1px solid var(--border)',
-                paddingBottom: '0.5rem'
-              }}>
-                <AlertTriangle size={18} />
-                <span>{strings.dashboard.lowStockAlerts} ({lowStockProducts.length})</span>
-              </h3>
+        {/* Low Stock Alerts */}
+        {isModuleEnabled('inventory') && (
+          <div className="card" style={{ flex: 1 }}>
+            <h3 style={{
+              fontSize: '1.1rem',
+              color: 'var(--danger)',
+              marginBottom: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              borderBottom: '1px solid var(--border)',
+              paddingBottom: '0.5rem'
+            }}>
+              <AlertTriangle size={18} />
+              <span>{strings.dashboard.lowStockAlerts} ({lowStockProducts.length})</span>
+            </h3>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
-                {lowStockProducts.map(p => (
-                  <div key={p.id} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '0.5rem 0.75rem',
-                    backgroundColor: 'hsl(0, 84%, 97%)',
-                    borderRadius: '6px',
-                    fontSize: '0.85rem'
-                  }}>
-                    <span style={{ fontWeight: '600', color: 'var(--text)' }}>{p.name}</span>
-                    <span className="badge badge-danger" style={{ animation: 'fadeIn 0.5s infinite alternate' }}>
-                      {p.quantity} قطع متبقية
-                    </span>
-                  </div>
-                ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
+              {lowStockProducts.map(p => (
+                <div key={p.id} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.5rem 0.75rem',
+                  backgroundColor: 'hsl(0, 84%, 97%)',
+                  borderRadius: '6px',
+                  fontSize: '0.85rem'
+                }}>
+                  <span style={{ fontWeight: '600', color: 'var(--text)' }}>{p.name}</span>
+                  <span className="badge badge-danger" style={{ animation: 'fadeIn 0.5s infinite alternate' }}>
+                    {p.quantity} قطع متبقية
+                  </span>
+                </div>
+              ))}
 
-                {lowStockProducts.length === 0 && (
-                  <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '1rem 0' }}>
-                    جميع المنتجات متوفرة بمخزون كافٍ.
-                  </div>
-                )}
-              </div>
+              {lowStockProducts.length === 0 && (
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '1rem 0' }}>
+                  جميع المنتجات متوفرة بمخزون كافٍ.
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Unsold Products Alert */}
+        {isModuleEnabled('inventory') && <UnsoldProductsAlert />}
+      </div>
 
         {/* Right Side: Recent Movements Log */}
         {isModuleEnabled('inventory') && (

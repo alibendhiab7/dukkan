@@ -17,6 +17,7 @@ export interface User {
   username: string;
   password_hash: string;
   role: 'sysadmin' | 'admin' | 'employee';
+  permissions?: Record<string, boolean>;
 }
 
 export interface TenantSettings {
@@ -36,25 +37,37 @@ export interface Product {
   sale_price: number;
   currency: 'SAR' | 'YER';
   quantity: number;
+  category?: string;
+  unit_of_measure?: string;
+  min_stock?: number;
+  max_stock?: number;
+  image_url?: string;
+  expiry_date?: string;
 }
 
 export interface InventoryMovement {
   id: string;
   tenant_id: string;
   product_id: string;
-  type: 'in' | 'out'; // 'in' for adding stock, 'out' for sales/adjustments
+  type: 'in' | 'out';
   quantity: number;
   created_at: string;
-  product_name?: string; // joined for display
+  product_name?: string;
 }
 
 export interface Sale {
   id: string;
   tenant_id: string;
   total: number;
-  created_by: string; // username
+  discount?: number;
+  discount_type?: 'percentage' | 'fixed';
+  final_total?: number;
+  created_by: string;
   created_at: string;
-  items?: SaleItem[]; // embedded for details
+  customer_id?: string;
+  customer_name?: string;
+  notes?: string;
+  items?: SaleItem[];
 }
 
 export interface SaleItem {
@@ -63,7 +76,8 @@ export interface SaleItem {
   product_id: string;
   qty: number;
   price: number;
-  product_name?: string; // joined for display
+  discount?: number;
+  product_name?: string;
 }
 
 export interface ExchangeRate {
@@ -77,7 +91,74 @@ export interface AuditLog {
   id: string;
   tenant_id: string;
   action: string;
-  performed_by: string; // username/system
+  performed_by: string;
+  created_at: string;
+}
+
+export interface Customer {
+  id: string;
+  tenant_id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  address?: string;
+  loyalty_points: number;
+  created_at: string;
+}
+
+export interface Notification {
+  id: string;
+  tenant_id: string;
+  title: string;
+  message: string;
+  type: 'success' | 'warning' | 'info' | 'danger';
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface Coupon {
+  id: string;
+  tenant_id: string;
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  max_uses: number;
+  used_count: number;
+  min_cart_total: number;
+  expires_at: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ProductReturn {
+  id: string;
+  tenant_id: string;
+  sale_id: string;
+  total_refund: number;
+  reason: string;
+  created_by: string;
+  created_at: string;
+  items?: ReturnItem[];
+}
+
+export interface ReturnItem {
+  id: string;
+  return_id: string;
+  product_id: string;
+  qty: number;
+  price: number;
+  product_name?: string;
+}
+
+export interface FinancialCost {
+  id: string;
+  tenant_id: string;
+  category: string;
+  description: string;
+  amount: number;
+  currency: string;
+  cost_date: string;
+  created_by: string;
   created_at: string;
 }
 
@@ -94,11 +175,13 @@ export interface ITenantRepository {
 
 export interface IUserRepository {
   getByUsername(tenantId: string, username: string): Promise<User | null>;
-  getByUsernameGlobal(username: string): Promise<User | null>; // For SysAdmins
+  getByUsernameGlobal(username: string): Promise<User | null>;
   getByTenant(tenantId: string): Promise<User[]>;
   create(user: User): Promise<void>;
   update(user: User): Promise<void>;
   delete(id: string, tenantId: string): Promise<void>;
+  getPermissions(userId: string): Promise<Record<string, boolean>>;
+  savePermissions(userId: string, tenantId: string, permissions: Record<string, boolean>): Promise<void>;
 }
 
 export interface ITenantSettingsRepository {
@@ -110,6 +193,8 @@ export interface IProductRepository {
   getAll(tenantId: string): Promise<Product[]>;
   getById(id: string, tenantId: string): Promise<Product | null>;
   getByBarcode(barcode: string, tenantId: string): Promise<Product | null>;
+  getByCategory(category: string, tenantId: string): Promise<Product[]>;
+  getLowStock(tenantId: string, threshold: number): Promise<Product[]>;
   create(product: Product): Promise<void>;
   update(product: Product): Promise<void>;
   delete(id: string, tenantId: string): Promise<void>;
@@ -126,7 +211,10 @@ export interface ISalesRepository {
   getAll(tenantId: string): Promise<Sale[]>;
   getById(id: string, tenantId: string): Promise<Sale | null>;
   getItems(saleId: string): Promise<SaleItem[]>;
+  getByDateRange(tenantId: string, from: string, to: string): Promise<Sale[]>;
+  getByCustomer(customerId: string, tenantId: string): Promise<Sale[]>;
   create(sale: Sale, items: SaleItem[]): Promise<void>;
+  voidSale(saleId: string, tenantId: string, username: string): Promise<void>;
 }
 
 export interface IExchangeRateRepository {
@@ -136,5 +224,50 @@ export interface IExchangeRateRepository {
 
 export interface IAuditLogRepository {
   getAll(tenantId: string): Promise<AuditLog[]>;
+  getByDateRange(tenantId: string, from: string, to: string): Promise<AuditLog[]>;
   create(log: Omit<AuditLog, 'id' | 'created_at'>): Promise<void>;
+}
+
+export interface ICustomerRepository {
+  getAll(tenantId: string): Promise<Customer[]>;
+  getById(id: string, tenantId: string): Promise<Customer | null>;
+  search(query: string, tenantId: string): Promise<Customer[]>;
+  create(customer: Customer): Promise<void>;
+  update(customer: Customer): Promise<void>;
+  delete(id: string, tenantId: string): Promise<void>;
+  addLoyaltyPoints(customerId: string, tenantId: string, points: number): Promise<void>;
+}
+
+export interface INotificationRepository {
+  getAll(tenantId: string): Promise<Notification[]>;
+  getUnread(tenantId: string): Promise<Notification[]>;
+  create(notification: Omit<Notification, 'id' | 'created_at'>): Promise<void>;
+  markAsRead(id: string, tenantId: string): Promise<void>;
+  markAllAsRead(tenantId: string): Promise<void>;
+  delete(id: string, tenantId: string): Promise<void>;
+}
+
+export interface ICouponRepository {
+  getAll(tenantId: string): Promise<Coupon[]>;
+  getByCode(code: string, tenantId: string): Promise<Coupon | null>;
+  create(coupon: Coupon): Promise<void>;
+  update(coupon: Coupon): Promise<void>;
+  delete(id: string, tenantId: string): Promise<void>;
+  incrementUsage(id: string, tenantId: string): Promise<void>;
+}
+
+export interface IProductReturnRepository {
+  getAll(tenantId: string): Promise<ProductReturn[]>;
+  getById(id: string, tenantId: string): Promise<ProductReturn | null>;
+  getItems(returnId: string): Promise<ReturnItem[]>;
+  create(returnData: ProductReturn, items: ReturnItem[]): Promise<void>;
+}
+
+export interface IFinancialCostRepository {
+  getAll(tenantId: string): Promise<FinancialCost[]>;
+  getByDateRange(tenantId: string, from: string, to: string): Promise<FinancialCost[]>;
+  create(cost: FinancialCost): Promise<void>;
+  update(cost: FinancialCost): Promise<void>;
+  delete(id: string, tenantId: string): Promise<void>;
+  getTotal(tenantId: string, category?: string): Promise<number>;
 }

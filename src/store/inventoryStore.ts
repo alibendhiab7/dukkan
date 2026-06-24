@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import type { Product, InventoryMovement } from '../core/repositories/interfaces';
 import { productRepo, movementRepo, auditRepo } from '../core/repositories/sqlite';
+import { useToastStore } from './toastStore';
 
 interface InventoryState {
   products: Product[];
@@ -15,6 +16,9 @@ interface InventoryState {
   updateProduct: (tenantId: string, product: Product, username: string) => Promise<boolean>;
   deleteProduct: (tenantId: string, productId: string, username: string) => Promise<boolean>;
   adjustStock: (tenantId: string, productId: string, qty: number, type: 'in' | 'out', username: string) => Promise<boolean>;
+  getProductsByCategory: (category: string) => Product[];
+  getLowStockProducts: () => Product[];
+  getCategories: () => string[];
 }
 
 export const useInventoryStore = create<InventoryState>((set, get) => ({
@@ -84,6 +88,13 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
 
       await get().loadProducts(tenantId);
       await get().loadMovements(tenantId);
+
+      useToastStore.getState().addToast('success', `تم إضافة المنتج "${productData.name}" بنجاح`);
+      
+      if (productData.quantity <= (productData.min_stock || 5)) {
+        useToastStore.getState().addToast('warning', `تنبيه: كمية المنتج "${productData.name}" منخفضة (${productData.quantity} قطع فقط)`);
+      }
+
       return true;
     } catch (err) {
       console.error(err);
@@ -120,6 +131,13 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       });
 
       await get().loadProducts(tenantId);
+      
+      useToastStore.getState().addToast('success', `تم تعديل المنتج "${product.name}" بنجاح`);
+      
+      if (product.quantity <= (product.min_stock || 5)) {
+        useToastStore.getState().addToast('warning', `تنبيه: مخزون "${product.name}" منخفض (${product.quantity} قطع متبقية)`);
+      }
+      
       return true;
     } catch (err) {
       console.error(err);
@@ -147,6 +165,9 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
       });
 
       await get().loadProducts(tenantId);
+      
+      useToastStore.getState().addToast('success', `تم حذف المنتج "${p.name}" بنجاح`);
+      
       return true;
     } catch (err) {
       console.error(err);
@@ -172,7 +193,6 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
 
       await productRepo.updateStock(productId, tenantId, delta);
 
-      // Log movement
       const movementId = 'mov_' + crypto.randomUUID().replace(/-/g, '').slice(0, 12);
       await movementRepo.create({
         id: movementId,
@@ -183,7 +203,6 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
         created_at: new Date().toISOString()
       });
 
-      // Audit log
       await auditRepo.create({
         tenant_id: tenantId,
         action: `تسوية كمية مخزون للمنتج (${p.name}): ${type === 'in' ? 'إدخال' : 'إخراج'} كمية قدرها ${qty}`,
@@ -192,11 +211,38 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
 
       await get().loadProducts(tenantId);
       await get().loadMovements(tenantId);
+
+      const newQty = type === 'in' ? p.quantity + qty : p.quantity - qty;
+      const minStock = p.min_stock || 5;
+      if (newQty <= minStock) {
+        useToastStore.getState().addToast('warning', `تنبيه: مخزون "${p.name}" منخفض (${newQty} قطع متبقية)`);
+      } else {
+        useToastStore.getState().addToast('success', `تم ${type === 'in' ? 'إدخال' : 'إخراج'} ${qty} قطعة من "${p.name}" بنجاح`);
+      }
+
       return true;
     } catch (err) {
       console.error(err);
       set({ error: 'فشل تعديل كمية المخزون', isLoading: false });
+      useToastStore.getState().addToast('error', 'فشل تعديل كمية المخزون');
       return false;
     }
-  }
+  },
+
+  getProductsByCategory: (category: string): Product[] => {
+    const { products } = get();
+    if (!category || category === 'all') return products;
+    return products.filter(p => p.category === category);
+  },
+
+  getLowStockProducts: (): Product[] => {
+    const { products } = get();
+    return products.filter(p => p.quantity <= (p.min_stock || 5));
+  },
+
+  getCategories: (): string[] => {
+    const { products } = get();
+    const cats = new Set(products.filter(p => p.category).map(p => p.category!));
+    return Array.from(cats).sort();
+  },
 }));

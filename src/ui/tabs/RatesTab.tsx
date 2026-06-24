@@ -6,7 +6,7 @@ import { strings } from '../../i18n';
 import { TrendingUp, RefreshCw, Save, Info, AlertCircle } from 'lucide-react';
 
 const RatesTab: React.FC = () => {
-  const { tenant, user } = useAuthStore();
+  const { tenant, user, hasPermission } = useAuthStore();
   const { exchangeRate, updateExchangeRate, error: rateError, isLoading } = useSalesStore();
 
   const [rateInput, setRateInput] = useState('');
@@ -93,7 +93,7 @@ const RatesTab: React.FC = () => {
                 placeholder={strings.rates.ratePlaceholder}
                 value={rateInput}
                 onChange={(e) => setRateInput(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || !hasPermission('rates.edit')}
                 style={{ width: '100%', paddingLeft: '4rem', fontWeight: 'bold', fontSize: '1.1rem' }}
                 required
               />
@@ -111,7 +111,7 @@ const RatesTab: React.FC = () => {
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={isLoading}
+            disabled={isLoading || !hasPermission('rates.edit')}
             style={{ border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.85rem' }}
           >
             {isLoading ? (

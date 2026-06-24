@@ -4,6 +4,8 @@ import { db } from './core/database/db';
 import { initializeSchemaAndSeed } from './core/database/schema';
 import { useAuthStore } from './store/authStore';
 import { AppRouter } from './routes';
+import ToastContainer from './ui/components/ToastContainer';
+import PWAInstallPrompt from './ui/components/PWAInstallPrompt';
 
 const App: React.FC = () => {
   const [dbReady, setDbReady] = useState(false);
@@ -104,7 +106,13 @@ const App: React.FC = () => {
     );
   }
 
-  return <AppRouter />;
+  return (
+    <>
+      <ToastContainer />
+      <PWAInstallPrompt />
+      <AppRouter />
+    </>
+  );
 };
 
 export default App;

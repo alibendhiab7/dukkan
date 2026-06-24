@@ -9,6 +9,7 @@ import { hashPassword } from '../../core/utils/hash';
 import { strings } from '../../i18n';
 import { 
   ShieldAlert, 
+  Shield,
   Store, 
   Plus, 
   FileText, 
@@ -51,6 +52,147 @@ const SysAdminLayout: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Permissions management state
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [permTargetUser, setPermTargetUser] = useState<any | null>(null);
+  const [permissionsState, setPermissionsState] = useState<Record<string, boolean>>({});
+
+  const handleOpenPermissions = async (user: any) => {
+    setError(null);
+    setSuccess(null);
+    try {
+      const perms = await userRepo.getPermissions(user.id);
+      
+      const defaults: Record<string, boolean> = {
+        'dashboard.read': true,
+        'sales.read': true,
+        'sales.create': true,
+        'sales.delete': false,
+        'inventory.read': true,
+        'inventory.add': false,
+        'inventory.edit': false,
+        'inventory.delete': false,
+        'customers.read': true,
+        'customers.add': true,
+        'customers.edit': false,
+        'customers.delete': false,
+        'debts.read': true,
+        'debts.add': true,
+        'debts.edit': false,
+        'debts.delete': false,
+        'returns.read': true,
+        'returns.add': true,
+        'costs.read': false,
+        'costs.add': false,
+        'costs.edit': false,
+        'costs.delete': false,
+        'reports.read': false,
+        'rates.read': true,
+        'rates.edit': false,
+        'printSettings.read': false,
+        'backup.read': false,
+        'promotions.read': true,
+        'promotions.add': false,
+        'promotions.delete': false,
+      };
+
+      const merged = { ...defaults, ...perms };
+      setPermissionsState(merged);
+      setPermTargetUser(user);
+      setShowPermissionsModal(true);
+    } catch (e) {
+      console.error(e);
+      setError('فشل تحميل صلاحيات هذا المستخدم');
+    }
+  };
+
+  const handleSavePermissions = async () => {
+    if (!permTargetUser) return;
+    setError(null);
+    setSuccess(null);
+    setIsLoading(true);
+    try {
+      await userRepo.savePermissions(permTargetUser.id, permTargetUser.tenant_id, permissionsState);
+      
+      await auditRepo.create({
+        tenant_id: '0',
+        action: `تعديل صلاحيات حساب الموظف: ${permTargetUser.username} بمتجر: ${permTargetUser.store_name}`,
+        performed_by: 'sysadmin'
+      });
+
+      setSuccess(`تم تحديث صلاحيات الحساب "${permTargetUser.username}" بنجاح.`);
+      setShowPermissionsModal(false);
+      setPermTargetUser(null);
+      await fetchSysAdminData();
+    } catch (err) {
+      console.error(err);
+      setError('حدث خطأ أثناء حفظ الصلاحيات');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const permissionGroups = [
+    {
+      title: 'نقطة البيع والمبيعات',
+      items: [
+        { key: 'sales.read', label: 'رؤية تبويب المبيعات وتاريخ الفواتير' },
+        { key: 'sales.create', label: 'إتمام المبيعات وطباعة الفاتورة' },
+        { key: 'sales.delete', label: 'إرجاع وإلغاء الفواتير (Void)' },
+      ]
+    },
+    {
+      title: 'المخزن والمنتجات',
+      items: [
+        { key: 'inventory.read', label: 'استعراض المنتجات وجدول المخزن' },
+        { key: 'inventory.add', label: 'إضافة منتجات جديدة للمخزن' },
+        { key: 'inventory.edit', label: 'تعديل المنتجات وتسوية كمياتها' },
+        { key: 'inventory.delete', label: 'حذف المنتجات من المخزن' },
+      ]
+    },
+    {
+      title: 'المديونية (الديون)',
+      items: [
+        { key: 'debts.read', label: 'رؤية تبويب المديونية وسجل التدقيق' },
+        { key: 'debts.add', label: 'تسجيل دين جديد (لعميل جديد أو قائم)' },
+        { key: 'debts.edit', label: 'تسديد دفعات ديون العملاء' },
+      ]
+    },
+    {
+      title: 'إدارة العملاء',
+      items: [
+        { key: 'customers.read', label: 'استعراض قائمة العملاء' },
+        { key: 'customers.add', label: 'إضافة عميل جديد للنظام' },
+        { key: 'customers.edit', label: 'تعديل وتحديث بيانات العملاء' },
+        { key: 'customers.delete', label: 'حذف العملاء من النظام' },
+      ]
+    },
+    {
+      title: 'المرتجعات والتكاليف والمصاريف',
+      items: [
+        { key: 'returns.read', label: 'استعراض تبويب المرتجعات وسجلها' },
+        { key: 'returns.add', label: 'تسجيل مرتجع سلع من الفواتير' },
+        { key: 'costs.read', label: 'رؤية المصاريف والتكاليف المالية للمتجر' },
+        { key: 'costs.add', label: 'إضافة مصاريف وتكاليف مالية جديدة' },
+        { key: 'costs.edit', label: 'تعديل المصاريف القائمة' },
+        { key: 'costs.delete', label: 'حذف المصاريف من النظام' },
+      ]
+    },
+    {
+      title: 'التقارير والإعدادات والخصومات',
+      items: [
+        { key: 'reports.read', label: 'استعراض التقارير الإحصائية والمالية' },
+        { key: 'rates.read', label: 'رؤية أسعار الصرف للريال اليمني/السعودي' },
+        { key: 'rates.edit', label: 'تعديل أسعار الصرف في المتجر' },
+        { key: 'printSettings.read', label: 'إدارة إعدادات الطباعة للحراري' },
+        { key: 'backup.read', label: 'النسخ الاحتياطي واستعادة البيانات' },
+        { key: 'promotions.read', label: 'رؤية قائمة العروض الترويجية النشطة' },
+        { key: 'promotions.add', label: 'إضافة عروض جديدة' },
+        { key: 'promotions.delete', label: 'حذف وإلغاء العروض' },
+      ]
+    }
+  ];
 
   const fetchSysAdminData = async () => {
     try {
@@ -356,7 +498,7 @@ const SysAdminLayout: React.FC = () => {
           </button>
           <ShieldAlert size={22} style={{ color: 'var(--secondary)' }} />
           <span className="store-title">{strings.sysadmin.title}</span>
-          <span className="badge badge-danger" style={{ marginRight: '0.5rem', fontSize: '0.7rem' }}>لوحة تحكم النظام السحابي</span>
+          <span className="badge badge-danger" style={{ marginRight: '0.5rem', fontSize: '0.7rem' }}>دكّان — مشرف النظام</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <span style={{ fontSize: '0.85rem' }} className="hide-on-mobile">{sysUser?.username}</span>
@@ -751,13 +893,24 @@ const SysAdminLayout: React.FC = () => {
                           </td>
                           <td style={{ padding: '1rem', textAlign: 'left' }}>
                             {u.role !== 'sysadmin' && (
-                              <button
-                                onClick={() => handleDeleteUserGlobal(u)}
-                                className="btn btn-danger"
-                                style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', border: 'none', borderRadius: '6px' }}
-                              >
-                                حذف
-                              </button>
+                              <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                                <button
+                                  onClick={() => handleOpenPermissions(u)}
+                                  className="btn btn-secondary"
+                                  style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                                  title="تخصيص الصلاحيات التفصيلية"
+                                >
+                                  <Shield size={12} />
+                                  <span>الصلاحيات</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUserGlobal(u)}
+                                  className="btn btn-danger"
+                                  style={{ padding: '0.35rem 0.5rem', fontSize: '0.75rem', border: 'none', borderRadius: '6px' }}
+                                >
+                                  حذف
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>
@@ -849,6 +1002,93 @@ const SysAdminLayout: React.FC = () => {
 
         </main>
       </div>
+
+      {showPermissionsModal && permTargetUser && (
+        <div className="modal-backdrop" onClick={() => { setShowPermissionsModal(false); setPermTargetUser(null); }} style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div className="card animate-scale-up" onClick={(e) => e.stopPropagation()} style={{
+            width: '95%',
+            maxWidth: '850px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '1.75rem',
+            gap: '1.25rem',
+            overflow: 'hidden',
+            borderRadius: '16px',
+            boxShadow: 'var(--shadow-lg)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Shield size={22} style={{ color: 'var(--primary)' }} />
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold' }}>تخصيص صلاحيات المستخدم: <span style={{ color: 'var(--primary)' }}>{permTargetUser.username}</span></h3>
+              </div>
+              <span className="badge badge-info" style={{ fontSize: '0.8rem' }}>{permTargetUser.store_name}</span>
+            </div>
+
+            <div style={{ flex: 1, overflowY: 'auto', paddingLeft: '0.5rem', paddingRight: '0.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.25rem' }}>
+                {permissionGroups.map((group, gIdx) => (
+                  <div key={gIdx} className="card" style={{ padding: '1.25rem', backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '10px' }}>
+                    <h4 style={{ color: 'var(--primary)', marginBottom: '1rem', borderRight: '4px solid var(--primary)', paddingRight: '0.5rem', fontSize: '0.95rem', fontWeight: 'bold' }}>{group.title}</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {group.items.map(item => (
+                        <label key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.85rem', userSelect: 'none' }}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(permissionsState[item.key])}
+                            onChange={(e) => setPermissionsState({ ...permissionsState, [item.key]: e.target.checked })}
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              cursor: 'pointer',
+                              accentColor: 'var(--primary)',
+                              borderRadius: '4px'
+                            }}
+                          />
+                          <span style={{ color: 'var(--text-dark)', fontWeight: '500' }}>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+              <button
+                type="button"
+                onClick={() => { setShowPermissionsModal(false); setPermTargetUser(null); }}
+                className="btn btn-secondary"
+                style={{ padding: '0.6rem 1.5rem', borderRadius: '8px', fontWeight: 'bold' }}
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                onClick={handleSavePermissions}
+                className="btn btn-primary"
+                style={{ border: 'none', padding: '0.6rem 1.5rem', borderRadius: '8px', fontWeight: 'bold' }}
+                disabled={isLoading}
+              >
+                {isLoading ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
