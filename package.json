@@ -7,9 +7,14 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:reset": "node --env-file=.env --import tsx api/db/run-reset.ts",
+    "db:migrate": "node --env-file=.env --import tsx api/db/run-migrate.ts",
+    "db:seed": "node --env-file=.env --import tsx api/db/run-seed.ts",
+    "db:setup": "node --env-file=.env --import tsx api/db/run-reset.ts && node --env-file=.env --import tsx api/db/run-migrate.ts && node --env-file=.env --import tsx api/db/run-seed.ts"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.4",
     "canvas-confetti": "^1.9.4",
     "lucide-react": "^1.21.0",
     "react": "^19.2.7",
@@ -26,6 +31,7 @@
     "@vitejs/plugin-react": "^6.0.2",
     "oxlint": "^1.69.0",
     "tailwindcss": "^4.3.1",
+    "tsx": "^4.22.4",
     "typescript": "~6.0.2",
     "vite": "^8.1.0"
   }

@@ -1,5 +1,5 @@
 // public/sw.js
-const CACHE_NAME = 'grocery-saas-v1';
+const CACHE_NAME = 'grocery-saas-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

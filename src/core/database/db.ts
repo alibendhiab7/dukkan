@@ -30,7 +30,7 @@ const ALL_TABLES = [
 ] as const;
 
 const DB_VERSION_KEY = 'grocery_saas_db_version';
-const CURRENT_DB_VERSION = 6;
+const CURRENT_DB_VERSION = 7;
 
 class LocalStorageSqlEngine implements DatabaseDriver {
   private prefix = 'grocery_saas_db_';
