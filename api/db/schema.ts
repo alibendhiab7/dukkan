@@ -1,0 +1,233 @@
+import { turso } from './turso';
+
+export const SCHEMA_SQL = `
+CREATE TABLE IF NOT EXISTS tenants (
+  id TEXT PRIMARY KEY,
+  client_code TEXT NOT NULL UNIQUE,
+  store_name TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  subscription_expires_at TEXT NOT NULL,
+  license_plan TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  username TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'employee',
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS tenant_settings (
+  tenant_id TEXT PRIMARY KEY,
+  enable_inventory INTEGER NOT NULL DEFAULT 1,
+  enable_sales INTEGER NOT NULL DEFAULT 1,
+  enable_reports INTEGER NOT NULL DEFAULT 1,
+  enable_employees INTEGER NOT NULL DEFAULT 1,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS products (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  barcode TEXT NOT NULL,
+  purchase_price REAL NOT NULL DEFAULT 0,
+  sale_price REAL NOT NULL DEFAULT 0,
+  currency TEXT NOT NULL DEFAULT 'SAR',
+  quantity INTEGER NOT NULL DEFAULT 0,
+  category TEXT,
+  unit_of_measure TEXT DEFAULT 'piece',
+  min_stock INTEGER DEFAULT 5,
+  max_stock INTEGER DEFAULT 100,
+  image_url TEXT,
+  expiry_date TEXT,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS inventory_movements (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  quantity INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+CREATE TABLE IF NOT EXISTS sales (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  total REAL NOT NULL DEFAULT 0,
+  discount REAL DEFAULT 0,
+  discount_type TEXT,
+  final_total REAL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  customer_id TEXT,
+  notes TEXT,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS sale_items (
+  id TEXT PRIMARY KEY,
+  sale_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  qty INTEGER NOT NULL,
+  price REAL NOT NULL,
+  discount REAL DEFAULT 0,
+  FOREIGN KEY (sale_id) REFERENCES sales(id),
+  FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+CREATE TABLE IF NOT EXISTS exchange_rates (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  sar_to_yer REAL NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  performed_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'info',
+  is_read INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS financial_costs (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT NOT NULL,
+  amount REAL NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'SAR',
+  cost_date TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS customers (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT,
+  address TEXT,
+  loyalty_points INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS coupons (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  discount_type TEXT NOT NULL,
+  discount_value REAL NOT NULL,
+  max_uses INTEGER NOT NULL DEFAULT 100,
+  used_count INTEGER NOT NULL DEFAULT 0,
+  min_cart_total REAL NOT NULL DEFAULT 0,
+  expires_at TEXT NOT NULL,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE TABLE IF NOT EXISTS product_returns (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  sale_id TEXT NOT NULL,
+  total_refund REAL NOT NULL,
+  reason TEXT NOT NULL,
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  FOREIGN KEY (sale_id) REFERENCES sales(id)
+);
+
+CREATE TABLE IF NOT EXISTS return_items (
+  id TEXT PRIMARY KEY,
+  return_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  qty INTEGER NOT NULL,
+  price REAL NOT NULL,
+  FOREIGN KEY (return_id) REFERENCES product_returns(id),
+  FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_permissions (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  permission_key TEXT NOT NULL,
+  is_granted INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS debts (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  customer_id TEXT NOT NULL,
+  amount REAL NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'SAR',
+  description TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+
+CREATE TABLE IF NOT EXISTS debt_logs (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  debt_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  amount REAL,
+  performed_by TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id),
+  FOREIGN KEY (debt_id) REFERENCES debts(id)
+);
+
+CREATE TABLE IF NOT EXISTS promotions (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  product_id TEXT,
+  min_qty INTEGER NOT NULL DEFAULT 0,
+  free_qty INTEGER NOT NULL DEFAULT 0,
+  discount_percent REAL,
+  valid_from TEXT NOT NULL,
+  valid_to TEXT NOT NULL,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+`;
+
+export async function migrate() {
+  const statements = SCHEMA_SQL.split(';').filter(s => s.trim());
+  for (const stmt of statements) {
+    await turso.execute(stmt.trim());
+  }
+  console.log('[Turso] Schema migration complete');
+}
