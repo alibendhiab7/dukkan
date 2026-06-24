@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useToastStore } from '../../store/toastStore';
-import { costRepo } from '../../core/repositories/sqlite';
+import { costRepo } from '../../core/repositories/turso';
 import type { FinancialCost } from '../../core/repositories/interfaces';
 import { strings } from '../../i18n';
 import { Plus, Edit2, Trash2, DollarSign, Filter } from 'lucide-react';

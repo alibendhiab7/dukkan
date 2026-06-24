@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
-import { salesRepo, productRepo } from '../../core/repositories/sqlite';
+import { salesRepo, productRepo } from '../../core/repositories/turso';
 import { TrendingDown } from 'lucide-react';
 
 const UnsoldProductsAlert: React.FC = () => {

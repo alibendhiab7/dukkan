@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useSalesStore } from '../../store/salesStore';
-import { tenantRepo, settingsRepo, auditRepo, userRepo } from '../../core/repositories/sqlite';
+import { tenantRepo, settingsRepo, auditRepo, userRepo } from '../../core/repositories/turso';
 import { db } from '../../core/database/db';
 import type { Tenant, TenantSettings } from '../../core/repositories/interfaces';
 import { hashPassword } from '../../core/utils/hash';

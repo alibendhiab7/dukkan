@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useToastStore } from '../../store/toastStore';
-import { couponRepo } from '../../core/repositories/sqlite';
+import { couponRepo } from '../../core/repositories/turso';
 import type { Coupon } from '../../core/repositories/interfaces';
 import { strings } from '../../i18n';
 import { Plus, Edit2, Trash2, Tag, CheckCircle, XCircle, Percent, DollarSign } from 'lucide-react';

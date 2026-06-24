@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useInventoryStore } from '../../store/inventoryStore';
 import { useToastStore } from '../../store/toastStore';
-import { movementRepo } from '../../core/repositories/sqlite';
+import { movementRepo } from '../../core/repositories/turso';
 import type { InventoryMovement } from '../../core/repositories/interfaces';
 import { strings } from '../../i18n';
 import {
@@ -245,7 +245,7 @@ const InventoryTab: React.FC = () => {
 
         if (!name || !barcode) continue;
 
-        const existing = await (await import('../../core/repositories/sqlite')).productRepo.getByBarcode(barcode, tenant.id);
+        const existing = await (await import('../../core/repositories/turso')).productRepo.getByBarcode(barcode, tenant.id);
         if (existing) continue;
 
         await addProduct(tenant.id, {

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useSalesStore } from '../../store/salesStore';
 import { useToastStore } from '../../store/toastStore';
-import { salesRepo, productRepo } from '../../core/repositories/sqlite';
+import { salesRepo, productRepo } from '../../core/repositories/turso';
 import type { SaleItem, Product, Sale } from '../../core/repositories/interfaces';
 import { strings } from '../../i18n';
 import {

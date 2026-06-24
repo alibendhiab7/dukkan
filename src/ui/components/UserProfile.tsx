@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useToastStore } from '../../store/toastStore';
-import { userRepo, auditRepo } from '../../core/repositories/sqlite';
+import { userRepo, auditRepo } from '../../core/repositories/turso';
 import { hashPassword, comparePassword } from '../../core/utils/hash';
 import { User, Shield, Key, Eye, EyeOff, Save, Package } from 'lucide-react';
 

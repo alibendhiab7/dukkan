@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAuthStore } from './authStore';
 import { useToastStore } from './toastStore';
-import { productRepo } from '../core/repositories/sqlite';
+import { productRepo } from '../core/repositories/turso';
 
 export function useExpiryNotifications() {
   const { tenant } = useAuthStore();

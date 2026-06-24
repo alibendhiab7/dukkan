@@ -1,7 +1,7 @@
 // src/store/cartStore.ts
 import { create } from 'zustand';
 import type { Product, Sale, SaleItem } from '../core/repositories/interfaces';
-import { salesRepo, rateRepo, auditRepo } from '../core/repositories/sqlite';
+import { salesRepo, rateRepo, auditRepo } from '../core/repositories/turso';
 import { useToastStore } from './toastStore';
 import confetti from 'canvas-confetti';
 

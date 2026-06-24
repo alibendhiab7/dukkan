@@ -30,7 +30,7 @@ const ALL_TABLES = [
 ] as const;
 
 const DB_VERSION_KEY = 'grocery_saas_db_version';
-const CURRENT_DB_VERSION = 6; // Bumped to fix seiyun subscription expiry date
+const CURRENT_DB_VERSION = 6;
 
 class LocalStorageSqlEngine implements DatabaseDriver {
   private prefix = 'grocery_saas_db_';
@@ -41,7 +41,6 @@ class LocalStorageSqlEngine implements DatabaseDriver {
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
-    // Check stored version — if outdated, wipe and re-seed
     const storedVersion = parseInt(localStorage.getItem(DB_VERSION_KEY) || '0', 10);
     if (storedVersion < CURRENT_DB_VERSION) {
       console.log(`[DB] Version mismatch: stored=${storedVersion}, current=${CURRENT_DB_VERSION}. Clearing for fresh seed.`);
@@ -49,7 +48,6 @@ class LocalStorageSqlEngine implements DatabaseDriver {
       localStorage.setItem(DB_VERSION_KEY, String(CURRENT_DB_VERSION));
     }
 
-    // Ensure all tables have storage slots and clean up duplicates
     for (const t of ALL_TABLES) {
       const key = this.prefix + t;
       const raw = localStorage.getItem(key);
@@ -78,7 +76,7 @@ class LocalStorageSqlEngine implements DatabaseDriver {
               localStorage.setItem(key, JSON.stringify(uniqueList));
             }
           }
-        } catch (e) {
+        } catch (_e) {
           // Ignore parse errors
         }
       }
@@ -93,11 +91,9 @@ class LocalStorageSqlEngine implements DatabaseDriver {
       localStorage.setItem(this.prefix + t, '[]');
     }
     this.txStore = {};
-    // Clear session too
     localStorage.removeItem('grocery_saas_session');
   }
 
-  // --- Internal data access ---
   private read(table: string): any[] {
     if (this.inTx && this.txStore[table] !== undefined) {
       return this.txStore[table];
@@ -114,10 +110,8 @@ class LocalStorageSqlEngine implements DatabaseDriver {
     localStorage.setItem(this.prefix + table, JSON.stringify(data));
   }
 
-  // --- Transaction support ---
   async transaction(callback: (tx: DatabaseDriver) => Promise<void>): Promise<void> {
     this.inTx = true;
-    // Snapshot all tables into txStore
     this.txStore = {};
     for (const t of ALL_TABLES) {
       this.txStore[t] = JSON.parse(JSON.stringify(this.read(t)));
@@ -125,7 +119,6 @@ class LocalStorageSqlEngine implements DatabaseDriver {
 
     try {
       await callback(this);
-      // Commit
       for (const t of Object.keys(this.txStore)) {
         localStorage.setItem(this.prefix + t, JSON.stringify(this.txStore[t]));
       }
@@ -138,7 +131,6 @@ class LocalStorageSqlEngine implements DatabaseDriver {
     }
   }
 
-  // --- SELECT ---
   async query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     const norm = sql.trim().replace(/\s+/g, ' ');
     const rx = /^SELECT\s+(.+?)\s+FROM\s+(\w+)(?:\s+WHERE\s+(.+?))?(?:\s+ORDER BY\s+([\w.]+)(?:\s+(ASC|DESC))?)?(?:\s+LIMIT\s+(\d+))?$/i;
@@ -173,11 +165,9 @@ class LocalStorageSqlEngine implements DatabaseDriver {
     return rows as T[];
   }
 
-  // --- INSERT / UPDATE / DELETE ---
   async execute(sql: string, params: any[] = []): Promise<{ rowsAffected: number; insertId?: number }> {
     const norm = sql.trim().replace(/\s+/g, ' ');
 
-    // INSERT
     if (/^INSERT INTO/i.test(norm)) {
       const m = norm.match(/^INSERT INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)$/i);
       if (!m) throw new Error(`[DB] Unsupported INSERT: ${sql}`);
@@ -204,7 +194,6 @@ class LocalStorageSqlEngine implements DatabaseDriver {
       return { rowsAffected: 1 };
     }
 
-    // UPDATE
     if (/^UPDATE/i.test(norm)) {
       const m = norm.match(/^UPDATE\s+(\w+)\s+SET\s+(.+?)(?:\s+WHERE\s+(.+?))?$/i);
       if (!m) throw new Error(`[DB] Unsupported UPDATE: ${sql}`);
@@ -229,7 +218,6 @@ class LocalStorageSqlEngine implements DatabaseDriver {
       return { rowsAffected: affected };
     }
 
-    // DELETE
     if (/^DELETE FROM/i.test(norm)) {
       const m = norm.match(/^DELETE FROM\s+(\w+)(?:\s+WHERE\s+(.+?))?$/i);
       if (!m) throw new Error(`[DB] Unsupported DELETE: ${sql}`);
@@ -251,13 +239,11 @@ class LocalStorageSqlEngine implements DatabaseDriver {
     throw new Error(`[DB] Unsupported SQL: ${sql}`);
   }
 
-  // --- WHERE clause evaluator ---
   private applyWhere(rows: any[], whereStr: string, params: any[]): any[] {
     const clean = whereStr.replace(/\b\w+\.(\w+)\b/g, '$1');
     const conditions = clean.split(/\s+AND\s+/i);
 
     return rows.filter(row => {
-      // CRITICAL: reset param index to 0 for EVERY row
       let pIdx = 0;
       let match = true;
 

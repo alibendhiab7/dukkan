@@ -5,7 +5,7 @@ import { useInventoryStore } from '../../store/inventoryStore';
 import { useCartStore } from '../../store/cartStore';
 import { useToastStore } from '../../store/toastStore';
 import { usePromotionStore } from '../../store/promotionStore';
-import { customerRepo, salesRepo } from '../../core/repositories/sqlite';
+import { customerRepo, salesRepo } from '../../core/repositories/turso';
 import type { Customer } from '../../core/repositories/interfaces';
 import { strings } from '../../i18n';
 import {

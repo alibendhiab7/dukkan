@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useSalesStore } from '../../store/salesStore';
 import { useToastStore } from '../../store/toastStore';
-import { userRepo, salesRepo, auditRepo } from '../../core/repositories/sqlite';
+import { userRepo, salesRepo, auditRepo } from '../../core/repositories/turso';
 import { hashPassword, comparePassword } from '../../core/utils/hash';
 import type { User, AuditLog } from '../../core/repositories/interfaces';
 import { strings } from '../../i18n';

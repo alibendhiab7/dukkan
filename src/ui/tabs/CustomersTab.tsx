@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useToastStore } from '../../store/toastStore';
-import { customerRepo, salesRepo } from '../../core/repositories/sqlite';
+import { customerRepo, salesRepo } from '../../core/repositories/turso';
 import type { Customer, Sale } from '../../core/repositories/interfaces';
 import { strings } from '../../i18n';
 import { Plus, Edit2, Trash2, Search, Phone, Mail, MapPin, History } from 'lucide-react';

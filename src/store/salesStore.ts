@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import type { Sale, ExchangeRate, AuditLog, User, Product } from '../core/repositories/interfaces';
 import { db } from '../core/database/db';
-import { salesRepo, rateRepo, auditRepo, userRepo } from '../core/repositories/sqlite';
+import { salesRepo, rateRepo, auditRepo, userRepo } from '../core/repositories/turso';
 import { hashPassword } from '../core/utils/hash';
 
 interface SalesState {

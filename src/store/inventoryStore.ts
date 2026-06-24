@@ -1,7 +1,7 @@
 // src/store/inventoryStore.ts
 import { create } from 'zustand';
 import type { Product, InventoryMovement } from '../core/repositories/interfaces';
-import { productRepo, movementRepo, auditRepo } from '../core/repositories/sqlite';
+import { productRepo, movementRepo, auditRepo } from '../core/repositories/turso';
 import { useToastStore } from './toastStore';
 
 interface InventoryState {

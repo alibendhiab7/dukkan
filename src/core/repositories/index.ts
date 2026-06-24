@@ -1,5 +1,5 @@
 // src/core/repositories/index.ts
-// Re-export from sqlite (localStorage) implementation
+// Re-export from Turso (API) implementation
 export {
   tenantRepo,
   userRepo,
@@ -8,5 +8,10 @@ export {
   movementRepo,
   salesRepo,
   rateRepo,
-  auditRepo
-} from './sqlite';
+  auditRepo,
+  customerRepo,
+  notificationRepo,
+  couponRepo,
+  returnRepo,
+  costRepo,
+} from './turso';

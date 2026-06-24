@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useToastStore } from '../../store/toastStore';
-import { returnRepo, salesRepo } from '../../core/repositories/sqlite';
+import { returnRepo, salesRepo } from '../../core/repositories/turso';
 import type { Sale, ProductReturn } from '../../core/repositories/interfaces';
 import { strings } from '../../i18n';
 import { RotateCcw, Package } from 'lucide-react';

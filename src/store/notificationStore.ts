@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Notification } from '../core/repositories/interfaces';
-import { notificationRepo } from '../core/repositories/sqlite';
+import { notificationRepo } from '../core/repositories/turso';
 
 interface NotificationState {
   notifications: Notification[];

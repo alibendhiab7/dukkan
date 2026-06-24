@@ -1,7 +1,7 @@
 // src/store/authStore.ts
 import { create } from 'zustand';
 import type { User, Tenant, TenantSettings } from '../core/repositories/interfaces';
-import { tenantRepo, userRepo, settingsRepo, auditRepo } from '../core/repositories/sqlite';
+import { tenantRepo, userRepo, settingsRepo, auditRepo } from '../core/repositories/turso';
 import { comparePassword } from '../core/utils/hash';
 
 interface AuthState {
