@@ -9,6 +9,20 @@ export interface Tenant {
   status: 'active' | 'suspended';
   subscription_expires_at: string;
   license_plan: string;
+  max_users?: number;
+}
+
+export interface TenantPayment {
+  id: string;
+  tenant_id: string;
+  amount: number;
+  payment_date: string;
+  payment_type: 'initial_setup' | 'renewal' | 'upgrade' | 'downgrade';
+  license_plan: string;
+  duration_days: number;
+  max_users: number;
+  notes?: string;
+  performed_by: string;
 }
 
 export interface User {
@@ -174,6 +188,7 @@ export interface ITenantRepository {
 }
 
 export interface IUserRepository {
+  getAll(): Promise<User[]>;
   getByUsername(tenantId: string, username: string): Promise<User | null>;
   getByUsernameGlobal(username: string): Promise<User | null>;
   getByTenant(tenantId: string): Promise<User[]>;
@@ -271,3 +286,10 @@ export interface IFinancialCostRepository {
   delete(id: string, tenantId: string): Promise<void>;
   getTotal(tenantId: string, category?: string): Promise<number>;
 }
+
+export interface ITenantPaymentRepository {
+  getAll(): Promise<TenantPayment[]>;
+  getByTenant(tenantId: string): Promise<TenantPayment[]>;
+  create(payment: TenantPayment): Promise<void>;
+}
+

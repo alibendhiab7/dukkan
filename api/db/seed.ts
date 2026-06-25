@@ -1,4 +1,5 @@
 import { turso } from './turso';
+import crypto from 'crypto';
 
 function daysAgo(from: Date, days: number): string {
   const d = new Date(from);
@@ -8,11 +9,7 @@ function daysAgo(from: Date, days: number): string {
 }
 
 function hashSimple(pw: string): string {
-  let h = 0;
-  for (let i = 0; i < pw.length; i++) {
-    h = ((h << 5) - h + pw.charCodeAt(i)) | 0;
-  }
-  return 'hash_' + Math.abs(h).toString(36);
+  return crypto.createHash('sha256').update(pw).digest('hex');
 }
 
 export async function seed() {
@@ -24,10 +21,10 @@ export async function seed() {
 
   const now = new Date();
 
-  await turso.execute({ sql: 'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan) VALUES (?, ?, ?, ?, ?, ?)', args: ['0', 'SYS', 'دكّان | Dukkan', 'active', '2099-12-31T23:59:59.000Z', '7_enterprise'] });
-  await turso.execute({ sql: 'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan) VALUES (?, ?, ?, ?, ?, ?)', args: ['100', 'mukalla1', 'سوبرماركت المكلا الرئيسي', 'active', '2030-12-31T23:59:59.000Z', '7_enterprise'] });
-  await turso.execute({ sql: 'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan) VALUES (?, ?, ?, ?, ?, ?)', args: ['200', 'mukalla2', 'بقالة الدهمة للتموين', 'active', '2029-06-30T23:59:59.000Z', '6_gold'] });
-  await turso.execute({ sql: 'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan) VALUES (?, ?, ?, ?, ?, ?)', args: ['300', 'mukalla3', 'محلات الميناء التجارية', 'active', '2028-12-31T23:59:59.000Z', '5_silver'] });
+  await turso.execute({ sql: 'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan, max_users) VALUES (?, ?, ?, ?, ?, ?, ?)', args: ['0', 'SYS', 'دكّان | Dukkan', 'active', '2099-12-31T23:59:59.000Z', '7_enterprise', 999] });
+  await turso.execute({ sql: 'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan, max_users) VALUES (?, ?, ?, ?, ?, ?, ?)', args: ['100', 'mukalla1', 'سوبرماركت المكلا الرئيسي', 'active', '2030-12-31T23:59:59.000Z', '7_enterprise', 10] });
+  await turso.execute({ sql: 'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan, max_users) VALUES (?, ?, ?, ?, ?, ?, ?)', args: ['200', 'mukalla2', 'بقالة الدهمة للتموين', 'active', '2029-06-30T23:59:59.000Z', '6_gold', 5] });
+  await turso.execute({ sql: 'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan, max_users) VALUES (?, ?, ?, ?, ?, ?, ?)', args: ['300', 'mukalla3', 'محلات الميناء التجارية', 'active', '2028-12-31T23:59:59.000Z', '5_silver', 3] });
 
   await turso.execute({ sql: 'INSERT INTO tenant_settings (tenant_id, enable_inventory, enable_sales, enable_reports, enable_employees) VALUES (?, ?, ?, ?, ?)', args: ['100', 1, 1, 1, 1] });
   await turso.execute({ sql: 'INSERT INTO tenant_settings (tenant_id, enable_inventory, enable_sales, enable_reports, enable_employees) VALUES (?, ?, ?, ?, ?)', args: ['200', 1, 1, 1, 1] });

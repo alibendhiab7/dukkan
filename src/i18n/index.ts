@@ -42,9 +42,9 @@ const stringsAr = {
   },
   auth: {
     title: 'تسجيل الدخول للنظام',
-    tenantPlaceholder: 'hadhramaut (رمز العميل / المتجر)',
-    usernamePlaceholder: 'admin (اسم المستخدم)',
-    passwordPlaceholder: '123456 (كلمة المرور)',
+    tenantPlaceholder: 'رمز العميل / المتجر',
+    usernamePlaceholder: 'اسم المستخدم',
+    passwordPlaceholder: 'كلمة المرور',
     tenantLabel: 'رمز المتجر (العميل)',
     usernameLabel: 'اسم المستخدم',
     passwordLabel: 'كلمة المرور',

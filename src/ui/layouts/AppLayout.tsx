@@ -10,7 +10,7 @@ import { strings } from '../../i18n';
 import {
   LayoutDashboard, ShoppingBag, Package, BarChart3, Users, TrendingUp,
   LogOut, Moon, Sun, Menu, X, RotateCcw, Printer,
-  Settings, DollarSign, Gift, UserCircle
+  Settings, DollarSign, Gift, UserCircle, FileText
 } from 'lucide-react';
 
 const DashboardTab = React.lazy(() => import('../tabs/DashboardTab'));
@@ -23,6 +23,7 @@ const ReturnsTab = React.lazy(() => import('../tabs/ReturnsTab'));
 const FinancialCostsTab = React.lazy(() => import('../tabs/FinancialCostsTab'));
 const PromotionsTab = React.lazy(() => import('../tabs/PromotionsTab'));
 const DebtsTab = React.lazy(() => import('../tabs/DebtsTab'));
+const InvoicesTab = React.lazy(() => import('../tabs/InvoicesTab'));
 import NotificationBell from '../components/NotificationBell';
 import BackupRestore from '../components/BackupRestore';
 import PrintSettingsPanel from '../components/PrintSettings';
@@ -32,7 +33,7 @@ import { useKeyboardShortcuts } from '../../store/useKeyboardShortcuts';
 import { useAutoLogout } from '../../store/useAutoLogout';
 import { startHeartbeat } from '../../store/onlineStore';
 
-type TabId = 'dashboard' | 'sales' | 'inventory' | 'reports' | 'rates' | 'customers' | 'debts' | 'returns' | 'costs' | 'backup' | 'printSettings' | 'profile' | 'promotions';
+type TabId = 'dashboard' | 'sales' | 'inventory' | 'reports' | 'rates' | 'customers' | 'debts' | 'returns' | 'costs' | 'backup' | 'printSettings' | 'profile' | 'promotions' | 'invoices';
 
 
 const AppLayout: React.FC = () => {
@@ -58,6 +59,22 @@ const AppLayout: React.FC = () => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (tenant && tenant.id !== '0') {
+      const checkStatus = () => {
+        const isExpired = new Date() > new Date(tenant.subscription_expires_at);
+        const isSuspended = tenant.status === 'suspended';
+        if (isExpired || isSuspended) {
+          alert(isSuspended ? 'حساب هذا المتجر موقوف حالياً!' : 'عذراً، لقد انتهت فترة اشتراك هذا المتجر. يرجى تجديد الاشتراك لتفادي توقف الخدمة.');
+          logout();
+        }
+      };
+      checkStatus();
+      const interval = setInterval(checkStatus, 30000); // Check every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [tenant, logout]);
 
   useEffect(() => {
     if (tenant) {
@@ -98,6 +115,7 @@ const AppLayout: React.FC = () => {
       title: 'إدارة المتجر',
       items: [
         { id: 'customers' as TabId, label: 'العملاء', icon: Users, enabled: isModuleEnabled('sales') && hasPermission('customers.read') },
+        { id: 'invoices' as TabId, label: 'سجل الفواتير', icon: FileText, enabled: isModuleEnabled('sales') && hasPermission('sales.read') },
         { id: 'debts' as TabId, label: 'المديونية', icon: DollarSign, enabled: isModuleEnabled('sales') && hasPermission('debts.read') },
         { id: 'promotions' as TabId, label: 'العروض', icon: Gift, enabled: isModuleEnabled('sales') && hasPermission('promotions.read') },
         { id: 'returns' as TabId, label: 'المرتجعات', icon: RotateCcw, enabled: isModuleEnabled('sales') && hasPermission('returns.read') },
@@ -125,6 +143,7 @@ const AppLayout: React.FC = () => {
       case 'reports': return <ReportsTab />;
       case 'rates': return <RatesTab />;
       case 'customers': return <CustomersTab />;
+      case 'invoices': return <InvoicesTab />;
       case 'debts': return <DebtsTab />;
       case 'returns': return <ReturnsTab />;
       case 'costs': return <FinancialCostsTab />;

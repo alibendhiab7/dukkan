@@ -13,6 +13,7 @@ import type {
   ICouponRepository,
   IProductReturnRepository,
   IFinancialCostRepository,
+  ITenantPaymentRepository,
   Tenant,
   User,
   TenantSettings,
@@ -27,7 +28,8 @@ import type {
   Coupon,
   ProductReturn,
   ReturnItem,
-  FinancialCost
+  FinancialCost,
+  TenantPayment
 } from '../interfaces';
 
 export class TursoTenantRepository implements ITenantRepository {
@@ -39,7 +41,16 @@ export class TursoTenantRepository implements ITenantRepository {
   async delete(id: string): Promise<void> { await api.tenants.remove(id); }
 }
 
+export class TursoTenantPaymentRepository implements ITenantPaymentRepository {
+  async getAll(): Promise<TenantPayment[]> { return api.tenants.getPayments(); }
+  async getByTenant(tenantId: string): Promise<TenantPayment[]> { return api.tenants.getPayments({ tenant_id: tenantId }); }
+  async create(payment: TenantPayment): Promise<void> { await api.tenants.createPayment(payment); }
+}
+
 export class TursoUserRepository implements IUserRepository {
+  async getAll(): Promise<User[]> {
+    return api.users.getAll();
+  }
   async getByUsername(tenantId: string, username: string): Promise<User | null> {
     return api.users.getByUsername(tenantId, username);
   }
@@ -229,3 +240,4 @@ export const notificationRepo = new TursoNotificationRepository();
 export const couponRepo = new TursoCouponRepository();
 export const returnRepo = new TursoProductReturnRepository();
 export const costRepo = new TursoFinancialCostRepository();
+export const paymentRepo = new TursoTenantPaymentRepository();

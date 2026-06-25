@@ -13,10 +13,7 @@ import {
   ShoppingBag,
   DollarSign,
   Briefcase,
-  RefreshCw,
-  CheckCircle,
   Calculator,
-  Database,
   Sparkles
 } from 'lucide-react';
 import UnsoldProductsAlert from '../components/UnsoldProductsAlert';
@@ -46,30 +43,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab }) => {
     return 'مساء الخير والأنوار 🌙';
   };
 
-  // SQLite Cloud Sync state
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success'>('idle');
-
   const { getOnlineByTenant } = useOnlineStore();
   const onlineUsers = tenant ? getOnlineByTenant(tenant.id) : [];
 
   // Mini Exchange Rate Calculator states
   const [sarInput, setSarInput] = useState<string>('');
   const [yerInput, setYerInput] = useState<string>('');
-
-  const handleSync = () => {
-    setSyncStatus('syncing');
-    setTimeout(() => {
-      setSyncStatus('success');
-      import('canvas-confetti').then((confetti) => {
-        confetti.default({
-          particleCount: 80,
-          spread: 60,
-          origin: { y: 0.8 }
-        });
-      });
-      setTimeout(() => setSyncStatus('idle'), 4000);
-    }, 1500);
-  };
 
   const rateVal = exchangeRate?.sar_to_yer || 395;
   const handleSarChange = (val: string) => {
@@ -247,54 +226,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab }) => {
       </div>
 
       {/* Premium Multi-Widget Dashboard Grid */}
-      <div className="grid-2">
-        {/* Card 2: Interactive SQLite Cloud Sync */}
-        <div className="sync-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--text-dark)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Database size={16} style={{ color: 'var(--primary-light)' }} />
-              <span>قاعدة بيانات SQLite المحلية</span>
-            </span>
-            <div className="sync-status-indicator">
-              <span className="sync-dot" />
-              <span>متاح أوفلاين</span>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
-              يتم تخزين العمليات محلياً ومزامنتها سحابياً بشكل تلقائي ومؤمن.
-            </p>
-            <button
-              onClick={handleSync}
-              className="btn btn-secondary"
-              disabled={syncStatus === 'syncing'}
-              style={{
-                width: '100%',
-                padding: '0.45rem',
-                fontSize: '0.8rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.35rem',
-                border: 'none',
-                borderRadius: '6px'
-              }}
-            >
-              <RefreshCw size={14} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
-              <span>
-                {syncStatus === 'idle' && 'تأكيد مزامنة البيانات سحابياً'}
-                {syncStatus === 'syncing' && 'جاري الاتصال والمزامنة...'}
-                {syncStatus === 'success' && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <CheckCircle size={14} style={{ color: 'var(--success)' }} />
-                    <span>تمت المزامنة بنجاح!</span>
-                  </span>
-                )}
-              </span>
-            </button>
-          </div>
-        </div>
-
+      <div style={{ marginBottom: '1.25rem' }}>
         {/* Card 3: Live Exchange Calculator Widget */}
         <div className="calc-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>

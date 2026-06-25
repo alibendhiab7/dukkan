@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import type { Sale, ExchangeRate, AuditLog, User, Product } from '../core/repositories/interfaces';
 import { db } from '../core/database/db';
-import { salesRepo, rateRepo, auditRepo, userRepo } from '../core/repositories/turso';
+import { salesRepo, rateRepo, userRepo, auditRepo, tenantRepo } from '../core/repositories/turso';
 import { hashPassword } from '../core/utils/hash';
 
 interface SalesState {
@@ -116,6 +116,15 @@ export const useSalesStore = create<SalesState>((set, get) => ({
       const existing = await userRepo.getByUsername(tenantId, empUsername.toLowerCase().trim());
       if (existing) {
         set({ error: 'اسم المستخدم مسجل مسبقاً في هذا المتجر', isLoading: false });
+        return false;
+      }
+
+      // Enforce max users limit
+      const currentUsers = await userRepo.getByTenant(tenantId);
+      const storeObj = await tenantRepo.getById(tenantId);
+      const maxUsers = storeObj?.max_users ?? 5;
+      if (currentUsers.length >= maxUsers) {
+        set({ error: `لقد تم الوصول للحد الأقصى المسموح به للمستخدمين في هذا المتجر وهو ${maxUsers} مستخدمين.`, isLoading: false });
         return false;
       }
 

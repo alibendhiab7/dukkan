@@ -39,9 +39,9 @@ export const stringsEn = {
   },
   auth: {
     title: 'Login to System',
-    tenantPlaceholder: 'hadhramaut (Client Code)',
-    usernamePlaceholder: 'admin (Username)',
-    passwordPlaceholder: '123456 (Password)',
+    tenantPlaceholder: 'Client Code',
+    usernamePlaceholder: 'Username',
+    passwordPlaceholder: 'Password',
     tenantLabel: 'Store Code (Client)',
     usernameLabel: 'Username',
     passwordLabel: 'Password',

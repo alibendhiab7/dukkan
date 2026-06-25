@@ -26,20 +26,20 @@ export async function initializeSchemaAndSeed(): Promise<void> {
 
   // 1. TENANTS
   await db.execute(
-    'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan) VALUES (?, ?, ?, ?, ?, ?)',
-    ['0', 'SYS', 'دكّان | Dukkan', 'active', '2099-12-31T23:59:59.000Z', '7_enterprise']
+    'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan, max_users) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    ['0', 'SYS', 'دكّان | Dukkan', 'active', '2099-12-31T23:59:59.000Z', '7_enterprise', 999]
   );
   await db.execute(
-    'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan) VALUES (?, ?, ?, ?, ?, ?)',
-    ['100', 'mukalla1', 'سوبرماركت المكلا الرئيسي', 'active', '2030-12-31T23:59:59.000Z', '7_enterprise']
+    'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan, max_users) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    ['100', 'mukalla1', 'سوبرماركت المكلا الرئيسي', 'active', '2030-12-31T23:59:59.000Z', '7_enterprise', 10]
   );
   await db.execute(
-    'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan) VALUES (?, ?, ?, ?, ?, ?)',
-    ['200', 'mukalla2', 'بقالة الدهمة للتموين', 'active', '2029-06-30T23:59:59.000Z', '6_gold']
+    'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan, max_users) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    ['200', 'mukalla2', 'بقالة الدهمة للتموين', 'active', '2029-06-30T23:59:59.000Z', '6_gold', 5]
   );
   await db.execute(
-    'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan) VALUES (?, ?, ?, ?, ?, ?)',
-    ['300', 'mukalla3', 'محلات الميناء التجارية', 'active', '2028-12-31T23:59:59.000Z', '5_silver']
+    'INSERT INTO tenants (id, client_code, store_name, status, subscription_expires_at, license_plan, max_users) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    ['300', 'mukalla3', 'محلات الميناء التجارية', 'active', '2028-12-31T23:59:59.000Z', '5_silver', 3]
   );
 
   // 2. TENANT SETTINGS

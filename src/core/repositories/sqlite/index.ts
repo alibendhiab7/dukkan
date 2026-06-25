@@ -68,6 +68,10 @@ export class SqliteTenantRepository implements ITenantRepository {
 
 // --- User Repository Implementation ---
 export class SqliteUserRepository implements IUserRepository {
+  async getAll(): Promise<User[]> {
+    return db.query<User>('SELECT * FROM users');
+  }
+
   async getByUsername(tenantId: string, username: string): Promise<User | null> {
     const rows = await db.query<User>(
       'SELECT * FROM users WHERE tenant_id = ? AND username = ?',

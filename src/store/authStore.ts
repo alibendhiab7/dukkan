@@ -195,6 +195,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
 
+      // Check if tenant is suspended or expired
+      if (tenantId !== '0') {
+        if (tenant.status === 'suspended') {
+          localStorage.removeItem('grocery_saas_session');
+          set({ isAuthenticated: false, isLoading: false, error: 'حساب هذا المتجر موقوف حالياً' });
+          return;
+        }
+        const expiryDate = new Date(tenant.subscription_expires_at);
+        if (new Date() > expiryDate) {
+          localStorage.removeItem('grocery_saas_session');
+          set({ isAuthenticated: false, isLoading: false, error: 'عذراً، لقد انتهت فترة اشتراك هذا المتجر. يرجى التواصل مع إدارة النظام لتجديد الترخيص.' });
+          return;
+        }
+      }
+
       let settings: TenantSettings | null = null;
       if (user.role !== 'sysadmin') {
         settings = await settingsRepo.getByTenantId(tenantId);

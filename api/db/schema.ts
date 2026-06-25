@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS tenants (
   store_name TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'active',
   subscription_expires_at TEXT NOT NULL,
-  license_plan TEXT NOT NULL
+  license_plan TEXT NOT NULL,
+  max_users INTEGER DEFAULT 5
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -222,12 +223,60 @@ CREATE TABLE IF NOT EXISTS promotions (
   is_active INTEGER NOT NULL DEFAULT 1,
   FOREIGN KEY (tenant_id) REFERENCES tenants(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_users_tenant_username ON users (tenant_id, username);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
+CREATE INDEX IF NOT EXISTS idx_products_tenant_barcode ON products (tenant_id, barcode);
+CREATE INDEX IF NOT EXISTS idx_products_tenant_category ON products (tenant_id, category);
+CREATE INDEX IF NOT EXISTS idx_products_tenant_quantity ON products (tenant_id, quantity);
+CREATE INDEX IF NOT EXISTS idx_sales_tenant_created ON sales (tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_sale_items_sale ON sale_items (sale_id);
+CREATE INDEX IF NOT EXISTS idx_movements_tenant ON inventory_movements (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_movements_product ON inventory_movements (product_id);
+CREATE INDEX IF NOT EXISTS idx_debts_tenant ON debts (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_debts_customer ON debts (customer_id);
+CREATE INDEX IF NOT EXISTS idx_customers_tenant ON customers (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_tenant ON notifications (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_costs_tenant ON financial_costs (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_promotions_tenant ON promotions (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_coupons_tenant ON coupons (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_returns_tenant ON product_returns (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_permissions_tenant_user ON user_permissions (tenant_id, user_id);
+
+CREATE TABLE IF NOT EXISTS tenant_payments (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  amount REAL NOT NULL,
+  payment_date TEXT NOT NULL,
+  payment_type TEXT NOT NULL,
+  license_plan TEXT NOT NULL,
+  duration_days INTEGER NOT NULL,
+  max_users INTEGER NOT NULL,
+  notes TEXT,
+  performed_by TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tenant_payments_tenant ON tenant_payments (tenant_id);
 `;
 
 export async function migrate() {
   const statements = SCHEMA_SQL.split(';').filter(s => s.trim());
   for (const stmt of statements) {
-    await turso.execute(stmt.trim());
+    try {
+      await turso.execute(stmt.trim());
+    } catch (err: any) {
+      if (!err.message.includes('already exists') && !err.message.includes('duplicate')) {
+        throw err;
+      }
+    }
+  }
+  try {
+    await turso.execute('ALTER TABLE tenants ADD COLUMN max_users INTEGER DEFAULT 5');
+  } catch (err: any) {
+    if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
+      console.log('[Migrate] Note: max_users column migration:', err.message);
+    }
   }
   console.log('[Turso] Schema migration complete');
 }

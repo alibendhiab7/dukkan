@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { strings } from '../../i18n';
-import { db } from '../../core/database/db';
-import { Lock, Store, User, RefreshCw, Shield, ShoppingCart, UserCog } from 'lucide-react';
+import { Lock, Store, User } from 'lucide-react';
 
 const LoginScreen: React.FC = () => {
   const { login, error, isLoading, clearError } = useAuthStore();
@@ -17,18 +16,6 @@ const LoginScreen: React.FC = () => {
     if (!storeCode || !username || !password) return;
     await login(storeCode, username, password);
   };
-
-  const quickLogin = async (code: string, user: string, pass: string) => {
-    clearError();
-    await login(code, user, pass);
-  };
-
-  const accounts = [
-    { label: 'مدير النظام', sublabel: 'System Admin', code: 'SYS', user: 'sysadmin', pass: 'sysadmin123', icon: Shield, color: '#7c3aed', bg: '#f3f0ff' },
-    { label: 'مدير المتجر', sublabel: 'Store Manager', code: 'hadhramaut', user: 'admin', pass: 'admin123', icon: UserCog, color: '#111', bg: '#f5f5f5' },
-    { label: 'موظف مبيعات', sublabel: 'Sales Employee', code: 'hadhramaut', user: 'salim', pass: 'salim123', icon: ShoppingCart, color: '#1E824C', bg: '#e6f7ef' },
-    { label: 'مدير سيئون', sublabel: 'Seiyun Manager', code: 'seiyun', user: 'admin', pass: 'admin123', icon: UserCog, color: '#e67e22', bg: '#fef3e2' },
-  ];
 
   return (
     <div style={{
@@ -104,66 +91,6 @@ const LoginScreen: React.FC = () => {
           </div>
         )}
 
-        {/* Quick Login Cards */}
-        <div style={{ marginBottom: '1.75rem' }}>
-          <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.8rem', fontWeight: '700', marginBottom: '0.85rem' }}>
-            دخول سريع - اختر حسابك
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-            {accounts.map((acc, i) => {
-              const Icon = acc.icon;
-              // Map old colors to premium glow theme
-              const accentColor = i === 0 ? '#10b981' : i === 1 ? '#f59e0b' : i === 2 ? '#3b82f6' : '#8b5cf6';
-              const glassBg = `rgba(${i === 0 ? '16,185,129' : i === 1 ? '245,158,11' : i === 2 ? '59,130,246' : '139,92,246'}, 0.08)`;
-              const borderCol = `rgba(${i === 0 ? '16,185,129' : i === 1 ? '245,158,11' : i === 2 ? '59,130,246' : '139,92,246'}, 0.15)`;
-
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => quickLogin(acc.code, acc.user, acc.pass)}
-                  disabled={isLoading}
-                  style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    gap: '0.5rem', padding: '1.25rem 0.85rem', border: `1px solid ${borderCol}`,
-                    borderRadius: '16px', cursor: 'pointer',
-                    backgroundColor: glassBg, backdropFilter: 'blur(8px)', transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                    opacity: isLoading ? 0.6 : 1,
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-3px)';
-                    e.currentTarget.style.borderColor = accentColor;
-                    e.currentTarget.style.boxShadow = `0 8px 24px ${accentColor}25`;
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.borderColor = borderCol;
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  <div style={{
-                    width: '42px', height: '42px', borderRadius: '12px',
-                    backgroundColor: accentColor, color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: `0 4px 12px ${accentColor}40`,
-                  }}>
-                    <Icon size={20} />
-                  </div>
-                  <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#f8fafc' }}>{acc.label}</span>
-                  <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: '600' }}>{acc.code} / {acc.user}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', margin: '1.75rem 0' }}>
-          <div style={{ flex: 1, height: '1px', background: '#1e293b' }} />
-          <span style={{ color: '#475569', fontSize: '0.75rem', fontWeight: '700' }}>أو سجّل يدوياً</span>
-          <div style={{ flex: 1, height: '1px', background: '#1e293b' }} />
-        </div>
-
         {/* Manual Form */}
         <form onSubmit={handleSubmit} style={{
           backgroundColor: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -173,7 +100,7 @@ const LoginScreen: React.FC = () => {
           <div className="input-group">
             <label className="input-label" style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{strings.auth.tenantLabel}</label>
             <div style={{ position: 'relative' }}>
-              <input type="text" className="input-field" placeholder="SYS / hadhramaut / seiyun"
+              <input type="text" className="input-field" placeholder={strings.auth.tenantPlaceholder}
                 value={storeCode} onChange={(e) => { clearError(); setStoreCode(e.target.value); }}
                 disabled={isLoading}
                 style={{
@@ -189,7 +116,7 @@ const LoginScreen: React.FC = () => {
           <div className="input-group">
             <label className="input-label" style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{strings.auth.usernameLabel}</label>
             <div style={{ position: 'relative' }}>
-              <input type="text" className="input-field" placeholder="admin / sysadmin"
+              <input type="text" className="input-field" placeholder={strings.auth.usernamePlaceholder}
                 value={username} onChange={(e) => { clearError(); setUsername(e.target.value); }}
                 disabled={isLoading}
                 style={{
@@ -232,25 +159,6 @@ const LoginScreen: React.FC = () => {
             {isLoading ? strings.common.loading : strings.auth.loginButton}
           </button>
         </form>
-
-        {/* Reset DB */}
-        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-          <button type="button" onClick={async () => {
-            if (window.confirm('هل تريد مسح البيانات وإعادة التهيئة؟')) {
-              await db.clearDatabase();
-              window.location.reload();
-            }
-          }} style={{
-            background: 'none', border: 'none', color: '#475569', fontSize: '0.75rem',
-            cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-            fontWeight: '600', transition: 'color 0.2s'
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = '#94a3b8'}
-          onMouseLeave={e => e.currentTarget.style.color = '#475569'}
-          >
-            <RefreshCw size={12} /> إعادة تهيئة قاعدة البيانات
-          </button>
-        </div>
       </div>
     </div>
   );

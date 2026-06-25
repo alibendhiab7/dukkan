@@ -14,4 +14,5 @@ export {
   couponRepo,
   returnRepo,
   costRepo,
+  paymentRepo,
 } from './turso';

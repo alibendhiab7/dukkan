@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { turso } from '../../db/turso';
+import { turso } from '../db/turso';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,7 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { tenant_id } = req.query;
+    const tenant_id = (req.query.tenant_id as string) || (req.body?.tenant_id as string);
     if (!tenant_id) return res.status(400).json({ error: 'tenant_id required' });
 
     if (req.method === 'GET') {
