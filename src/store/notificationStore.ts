@@ -42,34 +42,38 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   markAsRead: async (id: string, tenantId: string) => {
+    const prev = get().notifications;
+    const next = prev.map(n => n.id === id ? { ...n, is_read: true } : n);
+    set({ notifications: next, unreadCount: next.filter(n => !n.is_read).length });
     try {
       await notificationRepo.markAsRead(id, tenantId);
-      const notifications = get().notifications.map(n =>
-        n.id === id ? { ...n, is_read: true } : n
-      );
-      set({ notifications, unreadCount: notifications.filter(n => !n.is_read).length });
     } catch (err) {
       console.error(err);
+      set({ notifications: prev, unreadCount: prev.filter(n => !n.is_read).length });
     }
   },
 
   markAllAsRead: async (tenantId: string) => {
+    const prev = get().notifications;
+    const next = prev.map(n => ({ ...n, is_read: true }));
+    set({ notifications: next, unreadCount: 0 });
     try {
       await notificationRepo.markAllAsRead(tenantId);
-      const notifications = get().notifications.map(n => ({ ...n, is_read: true }));
-      set({ notifications, unreadCount: 0 });
     } catch (err) {
       console.error(err);
+      set({ notifications: prev, unreadCount: prev.filter(n => !n.is_read).length });
     }
   },
 
   deleteNotification: async (id: string, tenantId: string) => {
+    const prev = get().notifications;
+    const next = prev.filter(n => n.id !== id);
+    set({ notifications: next, unreadCount: next.filter(n => !n.is_read).length });
     try {
       await notificationRepo.delete(id, tenantId);
-      const notifications = get().notifications.filter(n => n.id !== id);
-      set({ notifications, unreadCount: notifications.filter(n => !n.is_read).length });
     } catch (err) {
       console.error(err);
+      set({ notifications: prev, unreadCount: prev.filter(n => !n.is_read).length });
     }
   },
 

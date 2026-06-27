@@ -19,6 +19,8 @@ interface AuthState {
   hasPermission: (permissionOrRole: string) => boolean;
   isModuleEnabled: (module: 'inventory' | 'sales' | 'reports' | 'employees') => boolean;
   reloadSettings: () => Promise<void>;
+  impersonate: (tenantId: string) => Promise<void>;
+  stopImpersonating: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -330,6 +332,117 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (tenant && user && user.role !== 'sysadmin') {
       const settings = await settingsRepo.getByTenantId(tenant.id);
       set({ settings });
+    }
+  },
+
+  impersonate: async (tenantId: string) => {
+    set({ isLoading: true });
+    try {
+      const tenant = await tenantRepo.getById(tenantId);
+      if (!tenant) {
+        set({ isLoading: false, error: 'المتجر غير موجود' });
+        return;
+      }
+      
+      const users = await userRepo.getByTenant(tenantId);
+      // Try to find an admin, or default to the first user
+      const user = users.find(u => u.role === 'admin') || users[0];
+      if (!user) {
+        // Fallback: If no users in tenant, construct a virtual user
+        const virtualUser = {
+          id: 'virtual_admin',
+          tenant_id: tenantId,
+          username: 'مدير المتجر',
+          role: 'admin'
+        } as any;
+        
+        const currentSession = localStorage.getItem('grocery_saas_session');
+        if (currentSession) {
+          localStorage.setItem('impersonator_original_session', currentSession);
+        }
+        localStorage.setItem('grocery_saas_session', JSON.stringify({
+          userId: virtualUser.id,
+          tenantId: tenant.id
+        }));
+
+        const settings = await settingsRepo.getByTenantId(tenant.id);
+        set({
+          user: virtualUser,
+          tenant,
+          settings,
+          isAuthenticated: true,
+          isLoading: false
+        });
+        window.location.hash = '#/dashboard';
+        return;
+      }
+
+      // Save the current real session
+      const currentSession = localStorage.getItem('grocery_saas_session');
+      if (currentSession) {
+        localStorage.setItem('impersonator_original_session', currentSession);
+      }
+
+      // Save mock session for the impersonated store
+      localStorage.setItem('grocery_saas_session', JSON.stringify({
+        userId: user.id,
+        tenantId: tenant.id
+      }));
+
+      // Load Settings
+      const settings = await settingsRepo.getByTenantId(tenant.id);
+
+      set({
+        user,
+        tenant,
+        settings,
+        isAuthenticated: true,
+        isLoading: false
+      });
+
+      // Force route to dashboard
+      window.location.hash = '#/dashboard';
+    } catch (err: any) {
+      console.error(err);
+      set({ isLoading: false, error: 'فشل تفعيل وضع محاكاة دخول المتجر' });
+    }
+  },
+
+  stopImpersonating: async () => {
+    set({ isLoading: true });
+    try {
+      const originalSessionStr = localStorage.getItem('impersonator_original_session');
+      if (!originalSessionStr) {
+        set({ isLoading: false });
+        return;
+      }
+
+      localStorage.removeItem('impersonator_original_session');
+      localStorage.setItem('grocery_saas_session', originalSessionStr);
+
+      const { userId, tenantId } = JSON.parse(originalSessionStr);
+      const tenant = await tenantRepo.getById(tenantId);
+      
+      let user: User | null = null;
+      if (tenantId === '0') {
+        user = await userRepo.getByUsernameGlobal('sysadmin');
+      } else {
+        const users = await userRepo.getByTenant(tenantId);
+        user = users.find(u => u.id === userId) || null;
+      }
+
+      set({
+        user,
+        tenant,
+        settings: null,
+        isAuthenticated: true,
+        isLoading: false
+      });
+
+      window.location.hash = '#/sysadmin';
+    } catch (err: any) {
+      console.error(err);
+      set({ isLoading: false, error: 'فشل إلغاء وضع المحاكاة' });
     }
   }
 }));

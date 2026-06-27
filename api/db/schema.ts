@@ -254,10 +254,82 @@ CREATE TABLE IF NOT EXISTS tenant_payments (
   max_users INTEGER NOT NULL,
   notes TEXT,
   performed_by TEXT NOT NULL,
+  payment_method TEXT,
+  coupon_code TEXT,
   FOREIGN KEY (tenant_id) REFERENCES tenants(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_tenant_payments_tenant ON tenant_payments (tenant_id);
+
+CREATE TABLE IF NOT EXISTS platform_payment_methods (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  details TEXT,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS tenant_invoices (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  invoice_number TEXT NOT NULL UNIQUE,
+  amount REAL NOT NULL,
+  tax REAL DEFAULT 0,
+  discount REAL DEFAULT 0,
+  final_total REAL NOT NULL,
+  status TEXT NOT NULL DEFAULT 'unpaid',
+  issue_date TEXT NOT NULL,
+  due_date TEXT NOT NULL,
+  license_plan TEXT NOT NULL,
+  duration_days INTEGER NOT NULL,
+  max_users INTEGER NOT NULL,
+  payment_method TEXT,
+  notes TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tenant_invoices_tenant ON tenant_invoices (tenant_id);
+
+CREATE TABLE IF NOT EXISTS platform_coupons (
+  id TEXT PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  discount_type TEXT NOT NULL,
+  discount_value REAL NOT NULL,
+  expires_at TEXT NOT NULL,
+  max_uses INTEGER NOT NULL DEFAULT 100,
+  used_count INTEGER NOT NULL DEFAULT 0,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS support_tickets (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open',
+  priority TEXT NOT NULL DEFAULT 'medium',
+  created_at TEXT NOT NULL,
+  resolved_at TEXT,
+  response TEXT,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_support_tickets_tenant ON support_tickets (tenant_id);
+
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  endpoint TEXT NOT NULL UNIQUE,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (tenant_id) REFERENCES tenants(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_tenant ON push_subscriptions (tenant_id);
 `;
 
 export async function migrate() {
@@ -276,6 +348,20 @@ export async function migrate() {
   } catch (err: any) {
     if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
       console.log('[Migrate] Note: max_users column migration:', err.message);
+    }
+  }
+  try {
+    await turso.execute('ALTER TABLE tenant_payments ADD COLUMN payment_method TEXT');
+  } catch (err: any) {
+    if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
+      console.log('[Migrate] Note: payment_method column migration:', err.message);
+    }
+  }
+  try {
+    await turso.execute('ALTER TABLE tenant_payments ADD COLUMN coupon_code TEXT');
+  } catch (err: any) {
+    if (!err.message.includes('duplicate column') && !err.message.includes('already exists')) {
+      console.log('[Migrate] Note: coupon_code column migration:', err.message);
     }
   }
   console.log('[Turso] Schema migration complete');

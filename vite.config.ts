@@ -70,7 +70,13 @@ const apiMiddleware = () => ({
           '/api/settings': './api/settings/index.ts',
           '/api/permissions': './api/permissions/index.ts',
           '/api/auth/login': './api/auth/login.ts',
-          '/api/reports': './api/reports/index.ts'
+          '/api/reports': './api/reports/index.ts',
+          '/api/platform/payment-methods': './api/payment-methods/index.ts',
+          '/api/platform/coupons': './api/coupons/platform.ts',
+          '/api/support/tickets': './api/support/index.ts',
+          '/api/notifications/broadcast': './api/notifications/broadcast.ts',
+          '/api/notifications/subscribe': './api/notifications/subscribe.ts',
+          '/api/invoices': './api/invoices/index.ts'
         };
 
         const handlerPath = routeMap[pathname];

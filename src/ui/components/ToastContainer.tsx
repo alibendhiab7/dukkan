@@ -15,7 +15,7 @@ const ToastContainer: React.FC = () => {
   if (toasts.length === 0) return null;
 
   return (
-    <div style={{
+    <div className="toast-container" style={{
       position: 'fixed',
       top: '1rem',
       left: '50%',
@@ -24,7 +24,7 @@ const ToastContainer: React.FC = () => {
       display: 'flex',
       flexDirection: 'column',
       gap: '0.5rem',
-      minWidth: '320px',
+      width: 'calc(100vw - 2rem)',
       maxWidth: '480px',
     }}>
       {toasts.map((toast) => {
@@ -33,6 +33,7 @@ const ToastContainer: React.FC = () => {
         return (
           <div
             key={toast.id}
+            className="toast-item"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -40,7 +41,7 @@ const ToastContainer: React.FC = () => {
               padding: '0.85rem 1rem',
               backgroundColor: config.bgColor,
               borderRight: `4px solid ${config.borderColor}`,
-              borderRadius: '10px',
+              borderRadius: '12px',
               boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
               animation: 'toastSlideIn 0.35s cubic-bezier(0.21, 1.02, 0.73, 1)',
               cursor: 'pointer',

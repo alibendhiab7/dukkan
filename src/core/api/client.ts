@@ -139,4 +139,44 @@ export const api = {
     audit: (tenantId: string) => request<any[]>(`/reports${qs({ tenant_id: tenantId, type: 'audit' })}`),
     inventory: (tenantId: string) => request<any[]>(`/reports${qs({ tenant_id: tenantId, type: 'inventory' })}`),
   },
+  
+  platform: {
+    paymentMethods: {
+      getAll: () => request<any[]>('/platform/payment-methods'),
+      create: (pm: any) => request('/platform/payment-methods', { method: 'POST', body: JSON.stringify(pm) }),
+      update: (pm: any) => request('/platform/payment-methods', { method: 'PUT', body: JSON.stringify(pm) }),
+      remove: (id: string) => request(`/platform/payment-methods${qs({ id })}`, { method: 'DELETE' }),
+    },
+    coupons: {
+      getAll: () => request<any[]>('/platform/coupons'),
+      getByCode: (code: string) => request<any | null>(`/platform/coupons${qs({ code })}`),
+      create: (c: any) => request('/platform/coupons', { method: 'POST', body: JSON.stringify(c) }),
+      update: (c: any) => request('/platform/coupons', { method: 'PUT', body: JSON.stringify(c) }),
+      remove: (id: string) => request(`/platform/coupons${qs({ id })}`, { method: 'DELETE' }),
+    }
+  },
+
+  support: {
+    tickets: {
+      getAll: (tenantId?: string) => request<any[]>(`/support/tickets${tenantId ? qs({ tenant_id: tenantId }) : ''}`),
+      create: (t: any) => request('/support/tickets', { method: 'POST', body: JSON.stringify(t) }),
+      update: (t: any) => request('/support/tickets', { method: 'PUT', body: JSON.stringify(t) }),
+      remove: (id: string) => request(`/support/tickets${qs({ id })}`, { method: 'DELETE' }),
+    }
+  },
+
+  broadcast: {
+    send: (title: string, message: string, type: string) => request('/notifications/broadcast', { method: 'POST', body: JSON.stringify({ title, message, type }) }),
+  },
+
+  push: {
+    subscribe: (tenantId: string, userId: string, subscription: any) => request('/notifications/subscribe', { method: 'POST', body: JSON.stringify({ tenant_id: tenantId, user_id: userId, subscription }) }),
+  },
+
+  invoices: {
+    getAll: (tenantId?: string) => request<any[]>(`/invoices${tenantId ? qs({ tenant_id: tenantId }) : ''}`),
+    create: (iv: any) => request('/invoices', { method: 'POST', body: JSON.stringify(iv) }),
+    update: (iv: any) => request('/invoices', { method: 'PUT', body: JSON.stringify(iv) }),
+    remove: (id: string) => request(`/invoices${qs({ id })}`, { method: 'DELETE' }),
+  },
 };

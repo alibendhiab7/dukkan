@@ -58,3 +58,45 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Push notifications event handler
+self.addEventListener('push', (event) => {
+  let data = { title: 'تنبيه جديد', body: 'لديك إشعار جديد من دكّان' };
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data = { title: 'تنبيه جديد', body: event.data.text() };
+    }
+  }
+
+  const options = {
+    body: data.body || data.message || '',
+    icon: '/favicon.svg',
+    badge: '/favicon.svg',
+    dir: 'rtl',
+    data: data,
+    vibrate: [100, 50, 100],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Notification click event handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
+});

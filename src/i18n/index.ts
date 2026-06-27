@@ -189,18 +189,18 @@ const stringsAr = {
 
 type Language = 'ar' | 'en';
 
-let currentLang: Language = (localStorage.getItem('grocery_saas_lang') as Language) || 'ar';
+let currentLang: Language = 'ar';
 
 export const setLanguage = (lang: Language) => {
-  currentLang = lang;
-  localStorage.setItem('grocery_saas_lang', lang);
-  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-  document.documentElement.lang = lang;
+  currentLang = 'ar';
+  localStorage.setItem('grocery_saas_lang', 'ar');
+  document.documentElement.dir = 'rtl';
+  document.documentElement.lang = 'ar';
 };
 
-export const getLanguage = (): Language => currentLang;
+export const getLanguage = (): Language => 'ar';
 
-export const strings = currentLang === 'en' ? stringsEn : stringsAr;
+export const strings = stringsAr;
 
 export const t = (path: string): string => {
   const keys = path.split('.');

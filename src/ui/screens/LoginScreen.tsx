@@ -18,16 +18,109 @@ const LoginScreen: React.FC = () => {
   };
 
   return (
-    <div style={{
+    <div className="login-screen" style={{
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       minHeight: '100vh',
-      background: '#0b0f19',
+      background: 'var(--background)',
       padding: '1.5rem 1rem',
       position: 'relative',
       overflow: 'hidden',
     }}>
+      <style>{`
+        .login-screen {
+          --login-bg: var(--background);
+          --login-surface: var(--surface);
+          --login-surface-glass: rgba(255, 255, 255, 0.08);
+          --login-text: var(--text);
+          --login-text-muted: var(--text-muted);
+          --login-text-light: var(--text-light);
+          --login-primary: var(--primary);
+          --login-primary-light: var(--primary-light);
+          --login-primary-lighter: var(--primary-lighter);
+          --login-secondary: var(--secondary);
+          --login-border: var(--border);
+          --login-success: var(--success);
+        }
+        [data-theme="dark"] .login-screen {
+          --login-bg: var(--background);
+          --login-surface: var(--surface);
+          --login-surface-glass: rgba(255, 255, 255, 0.05);
+          --login-text: var(--text);
+          --login-text-muted: var(--text-muted);
+          --login-text-light: var(--text-light);
+          --login-primary: var(--primary);
+          --login-primary-light: var(--primary-light);
+          --login-primary-lighter: var(--primary-lighter);
+          --login-secondary: var(--secondary);
+          --login-border: var(--border);
+          --login-success: var(--success);
+        }
+        .login-screen .login-glow-green {
+          background: radial-gradient(circle, rgba(var(--login-primary-rgb, 16, 185, 129), 0.12) 0%, transparent 70%);
+        }
+        .login-screen .login-glow-orange {
+          background: radial-gradient(circle, rgba(var(--login-secondary-rgb, 245, 158, 11), 0.08) 0%, transparent 70%);
+        }
+        .login-screen .login-logo-icon {
+          background: linear-gradient(135deg, var(--login-primary) 0%, var(--login-primary-light) 100%);
+          box-shadow: 0 8px 32px rgba(var(--login-primary-rgb, 16, 185, 129), 0.4);
+        }
+        .login-screen .login-title {
+          color: var(--login-text);
+        }
+        .login-screen .login-subtitle {
+          color: var(--login-primary);
+        }
+        .login-screen .login-description {
+          color: var(--login-text-muted);
+        }
+        .login-screen .login-form {
+          background: var(--login-surface-glass);
+          border: 1px solid var(--login-border);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+        }
+        .login-screen .login-label {
+          color: var(--login-text-muted);
+        }
+        .login-screen .login-input {
+          background: var(--login-surface);
+          border: 1px solid var(--login-border);
+          color: var(--login-text);
+        }
+        .login-screen .login-input:focus {
+          border-color: var(--login-primary);
+          box-shadow: 0 0 0 3px var(--login-primary-lighter);
+        }
+        .login-screen .login-input::placeholder {
+          color: var(--login-text-muted);
+        }
+        .login-screen .login-icon {
+          color: var(--login-text-muted);
+        }
+        .login-screen .login-btn {
+          background: linear-gradient(135deg, var(--login-primary) 0%, var(--login-primary-light) 100%);
+          color: var(--login-text-light);
+          box-shadow: 0 8px 24px rgba(var(--login-primary-rgb, 16, 185, 129), 0.35);
+        }
+        .login-screen .login-btn:hover {
+          opacity: 0.95;
+          transform: translateY(-1px);
+        }
+        .login-screen .login-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+        .login-screen .login-error {
+          background: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.25);
+          color: var(--danger);
+        }
+      `}</style>
+
       {/* Background Glow Blobs */}
       <div style={{
         position: 'absolute', top: '10%', left: '15%',
@@ -49,41 +142,25 @@ const LoginScreen: React.FC = () => {
       <div style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 1 }}>
         {/* Logo / Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{
+          <div className="login-logo-icon" style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: '76px', height: '76px', borderRadius: '22px',
-            background: 'linear-gradient(135deg, #1e1b4b 0%, #6366f1 100%)',
-            boxShadow: '0 8px 32px rgba(99, 102, 241, 0.4)',
+            width: '120px', height: 'auto', borderRadius: '22px',
             marginBottom: '1.25rem',
             position: 'relative',
           }}>
-            {/* Dukkan door/shelf icon */}
-            <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Storefront arch */}
-              <rect x="5" y="13" width="28" height="20" rx="2" fill="rgba(255,255,255,0.15)" />
-              <rect x="5" y="13" width="28" height="4" rx="2" fill="rgba(255,255,255,0.35)" />
-              {/* Door */}
-              <rect x="14" y="22" width="10" height="11" rx="2" fill="rgba(255,255,255,0.9)" />
-              {/* Door knob */}
-              <circle cx="21.5" cy="28" r="1" fill="#6366f1" />
-              {/* Awning */}
-              <path d="M3 13 Q19 6 35 13" stroke="rgba(255,255,255,0.6)" strokeWidth="2" fill="none" strokeLinecap="round"/>
-              {/* Sign */}
-              <rect x="9" y="17" width="20" height="3" rx="1" fill="rgba(255,255,255,0.5)" />
-            </svg>
+            <img src="/favicon.svg" alt="دكّان" style={{ width: '100%', height: 'auto' }} />
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: '900', color: '#fff', letterSpacing: '-0.025em', marginBottom: '0.2rem' }}>
+          <h1 className="login-title" style={{ fontSize: '2rem', fontWeight: '900', letterSpacing: '-0.025em', marginBottom: '0.2rem' }}>
             دكّان
           </h1>
-          <p style={{ color: '#818cf8', fontSize: '0.78rem', fontWeight: '700', letterSpacing: '0.08em', marginBottom: '0.3rem' }}>DUKKAN</p>
-          <p style={{ color: '#94a3b8', fontSize: '0.82rem', fontWeight: '500' }}>نظام سحابي متكامل لإدارة نقاط البيع والمخازن</p>
+          <p className="login-subtitle" style={{ fontSize: '0.78rem', fontWeight: '700', letterSpacing: '0.08em', marginBottom: '0.3rem' }}>DUKKAN</p>
+          <p className="login-description" style={{ fontSize: '0.82rem', fontWeight: '500' }}>نظام سحابي متكامل لإدارة نقاط البيع والمخازن</p>
         </div>
 
         {/* Error Notification */}
         {error && (
-          <div style={{
-            backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.25)',
-            color: '#f87171', padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-md)',
+          <div className="login-error" style={{
+            padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-md)',
             marginBottom: '1.5rem', fontSize: '0.85rem', fontWeight: '600',
             textAlign: 'center',
           }}>
@@ -92,69 +169,58 @@ const LoginScreen: React.FC = () => {
         )}
 
         {/* Manual Form */}
-        <form onSubmit={handleSubmit} style={{
-          backgroundColor: 'rgba(30, 41, 59, 0.4)', border: '1px solid rgba(255, 255, 255, 0.08)',
-          backdropFilter: 'blur(16px)', borderRadius: '24px', padding: '1.75rem',
-          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
+        <form onSubmit={handleSubmit} className="login-form" style={{
+          borderRadius: '24px', padding: '1.75rem',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
         }}>
           <div className="input-group">
-            <label className="input-label" style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{strings.auth.tenantLabel}</label>
+            <label className="login-label input-label" style={{ fontSize: '0.75rem' }}>{strings.auth.tenantLabel}</label>
             <div style={{ position: 'relative' }}>
-              <input type="text" className="input-field" placeholder={strings.auth.tenantPlaceholder}
+              <input type="text" className="login-input input-field" placeholder={strings.auth.tenantPlaceholder}
                 value={storeCode} onChange={(e) => { clearError(); setStoreCode(e.target.value); }}
                 disabled={isLoading}
                 style={{
                   width: '100%', paddingRight: '2.5rem',
-                  backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: '#fff', borderRadius: '12px', outline: 'none'
+                  borderRadius: '12px', outline: 'none'
                 }} />
-              <Store size={16} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+              <Store size={16} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
           </div>
 
           <div className="input-group">
-            <label className="input-label" style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{strings.auth.usernameLabel}</label>
+            <label className="login-label input-label" style={{ fontSize: '0.75rem' }}>{strings.auth.usernameLabel}</label>
             <div style={{ position: 'relative' }}>
-              <input type="text" className="input-field" placeholder={strings.auth.usernamePlaceholder}
+              <input type="text" className="login-input input-field" placeholder={strings.auth.usernamePlaceholder}
                 value={username} onChange={(e) => { clearError(); setUsername(e.target.value); }}
                 disabled={isLoading}
                 style={{
                   width: '100%', paddingRight: '2.5rem',
-                  backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: '#fff', borderRadius: '12px', outline: 'none'
+                  borderRadius: '12px', outline: 'none'
                 }} />
-              <User size={16} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+              <User size={16} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
           </div>
 
           <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-            <label className="input-label" style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{strings.auth.passwordLabel}</label>
+            <label className="login-label input-label" style={{ fontSize: '0.75rem' }}>{strings.auth.passwordLabel}</label>
             <div style={{ position: 'relative' }}>
-              <input type="password" className="input-field" placeholder="••••••"
+              <input type="password" className="login-input input-field" placeholder="••••••"
                 value={password} onChange={(e) => { clearError(); setPassword(e.target.value); }}
                 disabled={isLoading}
                 style={{
                   width: '100%', paddingRight: '2.5rem',
-                  backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  color: '#fff', borderRadius: '12px', outline: 'none'
+                  borderRadius: '12px', outline: 'none'
                 }} />
-              <Lock size={16} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#475569' }} />
+              <Lock size={16} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             </div>
           </div>
 
-          <button type="submit" disabled={isLoading}
+          <button type="submit" disabled={isLoading} className="login-btn"
             style={{
               width: '100%', padding: '0.9rem', border: 'none', borderRadius: '12px',
-              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-              color: '#fff', fontWeight: '800', fontSize: '0.95rem', cursor: 'pointer',
-              boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)',
+              fontWeight: '800', fontSize: '0.95rem', cursor: 'pointer',
               transition: 'all 0.2s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.opacity = '0.95'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
           >
             {isLoading ? strings.common.loading : strings.auth.loginButton}
           </button>

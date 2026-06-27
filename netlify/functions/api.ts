@@ -602,6 +602,216 @@ export const handler: Handler = async (event: HandlerEvent, _ctx: HandlerContext
       return json(400, { error: 'Invalid report type' });
     }
 
+    // ── /platform/payment-methods ───────────────
+    if (apiPath === '/platform/payment-methods') {
+      if (method === 'GET') {
+        const r = await turso.execute('SELECT * FROM platform_payment_methods ORDER BY created_at DESC');
+        return json(200, r.rows);
+      }
+      if (method === 'POST') {
+        const p = body;
+        const id = p.id || 'pm_' + Math.floor(Math.random() * 1000000);
+        await turso.execute({
+          sql: 'INSERT INTO platform_payment_methods (id, name, details, is_active, created_at) VALUES (?, ?, ?, ?, ?)',
+          args: [id, p.name, p.details || '', p.is_active ? 1 : 0, new Date().toISOString()]
+        });
+        return json(201, { success: true, id });
+      }
+      if (method === 'PUT') {
+        const p = body;
+        await turso.execute({
+          sql: 'UPDATE platform_payment_methods SET name = ?, details = ?, is_active = ? WHERE id = ?',
+          args: [p.name, p.details || '', p.is_active ? 1 : 0, p.id]
+        });
+        return json(200, { success: true });
+      }
+      if (method === 'DELETE') {
+        const { id } = query;
+        await turso.execute({ sql: 'DELETE FROM platform_payment_methods WHERE id = ?', args: [id] });
+        return json(200, { success: true });
+      }
+    }
+
+    // ── /platform/coupons ───────────────────────
+    if (apiPath === '/platform/coupons') {
+      if (method === 'GET') {
+        const { code } = query;
+        if (code) {
+          const r = await turso.execute({ sql: 'SELECT * FROM platform_coupons WHERE code = ? AND is_active = 1', args: [code.toUpperCase().trim()] });
+          return json(200, r.rows[0] || null);
+        }
+        const r = await turso.execute('SELECT * FROM platform_coupons ORDER BY created_at DESC');
+        return json(200, r.rows);
+      }
+      if (method === 'POST') {
+        const c = body;
+        const id = c.id || 'cp_' + Math.floor(Math.random() * 1000000);
+        await turso.execute({
+          sql: 'INSERT INTO platform_coupons (id, code, discount_type, discount_value, expires_at, max_uses, used_count, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          args: [id, c.code.toUpperCase().trim(), c.discount_type, c.discount_value, c.expires_at, c.max_uses || 100, c.used_count || 0, c.is_active ? 1 : 0, new Date().toISOString()]
+        });
+        return json(201, { success: true, id });
+      }
+      if (method === 'PUT') {
+        const c = body;
+        await turso.execute({
+          sql: 'UPDATE platform_coupons SET code = ?, discount_type = ?, discount_value = ?, expires_at = ?, max_uses = ?, used_count = ?, is_active = ? WHERE id = ?',
+          args: [c.code.toUpperCase().trim(), c.discount_type, c.discount_value, c.expires_at, c.max_uses, c.used_count, c.is_active ? 1 : 0, c.id]
+        });
+        return json(200, { success: true });
+      }
+      if (method === 'DELETE') {
+        const { id } = query;
+        await turso.execute({ sql: 'DELETE FROM platform_coupons WHERE id = ?', args: [id] });
+        return json(200, { success: true });
+      }
+    }
+
+    // ── /support/tickets ────────────────────────
+    if (apiPath === '/support/tickets') {
+      if (method === 'GET') {
+        const { tenant_id } = query;
+        if (tenant_id && tenant_id !== '0') {
+          const r = await turso.execute({ sql: 'SELECT * FROM support_tickets WHERE tenant_id = ? ORDER BY created_at DESC', args: [tenant_id] });
+          return json(200, r.rows);
+        }
+        const r = await turso.execute('SELECT * FROM support_tickets ORDER BY created_at DESC');
+        return json(200, r.rows);
+      }
+      if (method === 'POST') {
+        const t = body;
+        const id = t.id || 'tk_' + Math.floor(Math.random() * 1000000);
+        await turso.execute({
+          sql: 'INSERT INTO support_tickets (id, tenant_id, title, description, status, priority, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          args: [id, t.tenant_id, t.title, t.description, t.status || 'open', t.priority || 'medium', new Date().toISOString()]
+        });
+        return json(201, { success: true, id });
+      }
+      if (method === 'PUT') {
+        const t = body;
+        const now = new Date().toISOString();
+        await turso.execute({
+          sql: 'UPDATE support_tickets SET status = ?, response = ?, resolved_at = ? WHERE id = ?',
+          args: [t.status, t.response || null, t.response ? now : null, t.id]
+        });
+        
+        // If there is a response, send notification to the tenant
+        if (t.response) {
+          const notifId = 'notif_tk_' + Math.floor(Math.random() * 1000000);
+          await turso.execute({
+            sql: 'INSERT INTO notifications (id, tenant_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            args: [notifId, t.tenant_id, 'تم الرد على تذكرة الدعم الفني', `رد الإدارة: ${t.response.substring(0, 100)}...`, 'info', 0, now]
+          });
+        }
+        return json(200, { success: true });
+      }
+      if (method === 'DELETE') {
+        const { id } = query;
+        await turso.execute({ sql: 'DELETE FROM support_tickets WHERE id = ?', args: [id] });
+        return json(200, { success: true });
+      }
+    }
+
+    // ── /notifications/broadcast ────────────────
+    if (apiPath === '/notifications/broadcast') {
+      if (method !== 'POST') return json(405, { error: 'Method Not Allowed' });
+      const { title, message, type } = body;
+      const tenants = await turso.execute("SELECT id FROM tenants WHERE id != '0'");
+      const now = new Date().toISOString();
+      const queries = tenants.rows.map(t => {
+        const id = 'notif_bc_' + Math.floor(Math.random() * 1000000);
+        return {
+          sql: 'INSERT INTO notifications (id, tenant_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          args: [id, (t as any).id, title, message, type || 'info', 0, now]
+        };
+      });
+      if (queries.length > 0) {
+        await turso.batch(queries);
+      }
+      return json(200, { success: true, count: queries.length });
+    }
+
+    // ── /notifications/subscribe ────────────────
+    if (apiPath === '/notifications/subscribe') {
+      if (method !== 'POST') return json(405, { error: 'Method Not Allowed' });
+      const { tenant_id, user_id, subscription } = body;
+      const id = 'sub_' + Math.floor(Math.random() * 1000000);
+      await turso.execute({
+        sql: 'INSERT OR REPLACE INTO push_subscriptions (id, tenant_id, user_id, endpoint, p256dh, auth, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        args: [id, tenant_id, user_id, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth, new Date().toISOString()]
+      });
+      return json(201, { success: true });
+    }
+
+    // ── /invoices ───────────────────────────────
+    if (apiPath === '/invoices') {
+      if (method === 'GET') {
+        const { tenant_id } = query;
+        if (tenant_id && tenant_id !== '0') {
+          const r = await turso.execute({ sql: 'SELECT * FROM tenant_invoices WHERE tenant_id = ? ORDER BY created_at DESC', args: [tenant_id] });
+          return json(200, r.rows);
+        }
+        const r = await turso.execute('SELECT * FROM tenant_invoices ORDER BY created_at DESC');
+        return json(200, r.rows);
+      }
+      if (method === 'POST') {
+        const iv = body;
+        const id = iv.id || 'inv_' + Math.floor(Math.random() * 1000000);
+        const invNum = iv.invoice_number || 'INV-' + Date.now().toString().slice(-6);
+        await turso.execute({
+          sql: 'INSERT INTO tenant_invoices (id, tenant_id, invoice_number, amount, tax, discount, final_total, status, issue_date, due_date, license_plan, duration_days, max_users, payment_method, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          args: [id, iv.tenant_id, invNum, iv.amount, iv.tax || 0, iv.discount || 0, iv.final_total, iv.status || 'unpaid', iv.issue_date || new Date().toISOString().split('T')[0], iv.due_date, iv.license_plan, iv.duration_days, iv.max_users, iv.payment_method || null, iv.notes || '', new Date().toISOString()]
+        });
+        return json(201, { success: true, id, invoice_number: invNum });
+      }
+      if (method === 'PUT') {
+        const iv = body;
+        // If the invoice is being marked as paid, we automatically extend/renew the tenant license!
+        if (iv.status === 'paid') {
+          const invObj = await turso.execute({ sql: 'SELECT * FROM tenant_invoices WHERE id = ?', args: [iv.id] });
+          if (invObj.rows.length > 0) {
+            const invoice = invObj.rows[0] as any;
+            
+            // Get current tenant to extend date
+            const tenantObj = await turso.execute({ sql: 'SELECT * FROM tenants WHERE id = ?', args: [invoice.tenant_id] });
+            if (tenantObj.rows.length > 0) {
+              const tenant = tenantObj.rows[0] as any;
+              let baseDate = new Date();
+              if (new Date(tenant.subscription_expires_at) > baseDate) {
+                baseDate = new Date(tenant.subscription_expires_at);
+              }
+              baseDate.setDate(baseDate.getDate() + invoice.duration_days);
+              const newExpiry = baseDate.toISOString();
+              
+              // 1. Update tenant status/plan/expiry
+              await turso.execute({
+                sql: 'UPDATE tenants SET subscription_expires_at = ?, license_plan = ?, max_users = ?, status = ? WHERE id = ?',
+                args: [newExpiry, invoice.license_plan, invoice.max_users, 'active', invoice.tenant_id]
+              });
+              
+              // 2. Insert into tenant_payments (receipt record)
+              const pmtId = 'pmt_' + Math.floor(Math.random() * 1000000);
+              await turso.execute({
+                sql: 'INSERT INTO tenant_payments (id, tenant_id, amount, payment_date, payment_type, license_plan, duration_days, max_users, notes, performed_by, payment_method, coupon_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                args: [pmtId, invoice.tenant_id, invoice.final_total, new Date().toISOString(), 'renewal', invoice.license_plan, invoice.duration_days, invoice.max_users, `سداد الفاتورة رقم ${invoice.invoice_number}. ملاحظات: ${iv.notes || ''}`, 'sysadmin', iv.payment_method || invoice.payment_method, invoice.discount > 0 ? 'COUPON' : null]
+              });
+            }
+          }
+        }
+        
+        await turso.execute({
+          sql: 'UPDATE tenant_invoices SET status = ?, payment_method = ?, notes = ? WHERE id = ?',
+          args: [iv.status, iv.payment_method || null, iv.notes || '', iv.id]
+        });
+        return json(200, { success: true });
+      }
+      if (method === 'DELETE') {
+        const { id } = query;
+        await turso.execute({ sql: 'DELETE FROM tenant_invoices WHERE id = ?', args: [id] });
+        return json(200, { success: true });
+      }
+    }
+
     // ── 404 ──────────────────────────────────────
     return json(404, { error: `Route not found: ${apiPath}` });
 
